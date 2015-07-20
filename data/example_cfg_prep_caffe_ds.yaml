@@ -1,0 +1,55 @@
+# specify the path to the fire3 database
+#
+# DB with segmented table to read information about nifti ct-volumes and nifti segmentations
+sqlite_db: '/media/nas/sqlitedb/deepliver/finalDBNew.sql'
+
+# path to leveldb folders (output)
+#
+# path where levelDBs shall be saved; make sure you have created this folder
+lvdb_base_folder: '/home/mbickel/master/tmp/test2/'   #stat-batch24-aug3-384/'
+
+# slices (xy, xz, yz)
+#
+# specify the direction of slices, that shall be included in the dataset
+slices:
+- xy
+#- xz
+#- yz
+
+# test ratio
+#
+# this is the ratio of the total dataset, that is inteded for testing and thus saved in a separate test database
+test_ratio: 0.2
+
+# slice options: liver-lesion, stat-batch, dyn-batch
+#
+# liver-lesion: Include only slices which are labeled with liver or lesion (or both)
+# dyn-batch:    Each batch consists of the same ratio of tissue labeled, lesion labeld and
+#               liver labeled slices as the underlying nifti volume.
+# stat-batch:   define a constant number of slices for each label type. Augmentation factors of each slice
+#               in one volume will be adapted, so that required specifications can be met.
+slicing: 'liver-lesion'
+
+# augmentation factor
+#
+# Factor by which each slice is augmented. In the case of 'stat-batch' it is the base factor as
+# starting point for the auto adaption.
+aug_fac: 1
+
+# image resolution
+#
+# Resolution to which all slices shall either be scalled up or down.
+img_res_x: 384
+img_res_y: 384
+
+# batch size
+#
+# Batch size to which images are bundled for processing in a caffe net (only relevant for stat-batch and dyn-batch)
+batch_size: 24
+
+# only uncomment for dyn-batch
+#
+# Total number of slices for each label in a batch. Sum must equal the total batch size.
+nb_tissue_slices: 8
+nb_liver_slices: 8
+nb_lesion_slices: 8
