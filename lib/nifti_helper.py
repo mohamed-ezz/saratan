@@ -27,6 +27,8 @@ class NiftiDBHelper:
         self.count = self.q_total()
         self.row = None
 
+        self.shuffled_uids = self.get_shuffled_uids()
+
     def __del__(self):
         f3.close_db()
 
@@ -36,6 +38,16 @@ class NiftiDBHelper:
         :param path: Path to sqlite db with segmented table (see fire3db package)
         """
         f3.init_db(os.path.normpath(path))
+
+    def get_shuffled_uids(self):
+        suids = []
+
+        for uid in f3.Segmented.select(f3.Segmented.uid):
+            suids.append(uid.uid)
+
+        random.shuffle(suids)
+
+        return suids
 
     def get_row(self):
         if self.row != None:
@@ -51,6 +63,10 @@ class NiftiDBHelper:
             raise IndexError
 
         self.row = f3.Segmented.select().offset(nb).limit(1).first()
+        return self.row
+
+    def q_shuffled_row(self):
+        self.row = f3.Segmented.select().where(f3.Segmented.uid == self.shuffled_uids.pop()).limit(1).first()
         return self.row
 
     def q_total(self):
@@ -103,6 +119,8 @@ class NiftiDBHelper:
         return get_dim(self.get_seg_img())
 
 
+
+
 class Segmentations:
     """Iterator for looping over all segmented niftis in the database."""
 
@@ -119,6 +137,26 @@ class Segmentations:
             raise StopIteration
         else:
             self.data.q_x_row(self.index)
+            self.index += 1
+            return self.data
+
+
+class SegmentationsShuffled:
+    """Iterator for looping over all segmented niftis in the database and giving them back shuffled."""
+
+    def __init__(self, path):
+        self.data = NiftiDBHelper(path)
+        self.index = 0
+        self.total = self.data.q_total()
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if self.index == self.total:
+            raise StopIteration
+        else:
+            self.data.q_shuffled_row()
             self.index += 1
             return self.data
 
@@ -202,7 +240,7 @@ def xy_slices(img):
     dat = get_img_data(img)
 
     for i in xrange(z_max - 1):
-        yield dat[:, :, i]
+        yield np.rot90(dat[:, :, i])
 
 
 def xz_slices(img):
@@ -212,7 +250,7 @@ def xz_slices(img):
     dat = get_img_data(img)
 
     for i in xrange(y_max - 1):
-        yield dat[:, i, :]
+        yield np.rot90(dat[:, i, :])
 
 
 def yz_slices(img):
@@ -222,7 +260,7 @@ def yz_slices(img):
     dat = get_img_data(img)
 
     for i in xrange(x_max - 1):
-        yield dat[i, :, :]
+        yield np.rot90(dat[i, :, :])
 
 
 def serialize_slice(slc):
@@ -230,8 +268,7 @@ def serialize_slice(slc):
     if np.amax(slc) > 255:
         raise ValueError("Slice must be a uint8 byte array.")
     else:
-        # np.rot90(slc)...
-        return np.rot90(slc).tostring()
+        return slc.tostring()
 
 
 def hounsfield_to_byte_dyn(arr, c_min=0.1, c_max=0.3):

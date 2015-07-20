@@ -159,7 +159,7 @@ class ImageAdapter:
         img = self.read_img(key)
 
         with io.open(os.path.normpath(path + '/' + key.get_key() + '.ppm'), 'wb') as ppm:
-            ppm.write(b'P5\n' + bytes(img.shape[0]) + b' ' + bytes(img.shape[1]) + b'\n' + b'255\n')
+            ppm.write(b'P5\n' + bytes(img.shape[1]) + b' ' + bytes(img.shape[0]) + b'\n' + b'255\n')
             ppm.write(img.tostring())
 
     def read_volume(self, key):
