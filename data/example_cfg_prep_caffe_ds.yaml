@@ -6,7 +6,7 @@ sqlite_db: '/media/nas/sqlitedb/deepliver/finalDBNew.sql'
 # path to leveldb folders (output)
 #
 # path where levelDBs shall be saved; make sure you have created this folder
-lvdb_base_folder: '/home/mbickel/master/tmp/lesion-only-aug17-512_mk3/'   #stat-batch24-aug3-384/' lesion-only-aug17-512
+lvdb_base_folder: '/home/mbickel/master/tmp/test_clip/'   #stat-batch24-aug3-384/' lesion-only-aug17-512
 
 # slices (xy, xz, yz)
 #

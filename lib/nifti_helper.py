@@ -21,8 +21,18 @@ f3 = imp.load_source('f3', os.path.normpath('../lib/fire3db.py'))
 class NiftiDBHelper:
     """Helper class to get niftis or numpy tensors registered in fire3 SQLite database."""
 
-    def __init__(self, path):
+    def __init__(self, path, type='train'):
         self.set_db(path)
+
+        self.__table = None
+
+        if type == 'train':
+            self.__table = f3.Segmented
+        elif type == 'test':
+            #self.__table = f3.TestSet
+            pass
+        else:
+            raise ValueError('Unknown type (' + str(type) + ').')
 
         self.count = self.q_total()
         self.row = None
@@ -146,6 +156,24 @@ class SegmentationsShuffled:
 
     def __init__(self, path):
         self.data = NiftiDBHelper(path)
+        self.index = 0
+        self.total = self.data.q_total()
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if self.index == self.total:
+            raise StopIteration
+        else:
+            self.data.q_shuffled_row()
+            self.index += 1
+            return self.data
+
+
+class TestSet:
+    def __init__(self, path):
+        self.data = NiftiDBHelper(path, type='test')
         self.index = 0
         self.total = self.data.q_total()
 
