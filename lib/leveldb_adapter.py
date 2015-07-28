@@ -143,6 +143,16 @@ class ImageAdapter:
         self.wb = None
         self.batch_counter = 0
 
+    @staticmethod
+    def datum_to_img(self, datum):
+        datum_obj = caffe.proto.caffe_pb2.Datum()
+        datum_obj.ParseFromString(datum)
+
+        flat_img = np.fromstring(datum.data, dtype=np.uint8)
+        img = flat_img.reshape(datum.height, datum.width)
+
+        return img
+
     def read_img(self, key):
         key.create_key()
         raw_datum = self.db.get(bytes(key.get_key()))
