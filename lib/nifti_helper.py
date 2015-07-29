@@ -384,18 +384,18 @@ def dump_vol_to_nifti(vol, path):
     # transformation for [0,1] data
     if np.amin(vol) >= 0 and np.amax(vol) <= 1:
         vol_tmp = np.array(vol, dtype=np.float64)
-        vol_tmp = np.subtract(vol, 0.5)
-        vol_tmp = np.multiply(vol, 2000.0)
+        vol_tmp = np.subtract(vol_tmp, 0.5)
+        vol_tmp = np.multiply(vol_tmp, 2000.0)
         vol_tmp = np.round(vol_tmp)
 
         vol_trans = np.array(vol_tmp, dtype=np.int16)
 
-    # transformation for data [0,255]
+    # transformation for [0,255] data
     elif np.amin(vol) >= 0 and np.amax(vol) <= 255:
         vol_tmp = np.array(vol, dtype=np.float64)
         vol_tmp = np.divide(vol_tmp, 255.0)
-        vol_tmp = np.subtract(vol, 0.5)
-        vol_tmp = np.multiply(vol, 2000.0)
+        vol_tmp = np.subtract(vol_tmp, 0.5)
+        vol_tmp = np.multiply(vol_tmp, 2000.0)
         vol_tmp = np.round(vol_tmp)
 
         vol_trans = np.array(vol_tmp, dtype=np.int16)
@@ -403,7 +403,7 @@ def dump_vol_to_nifti(vol, path):
     # transformation for [-1,1] data
     elif np.amin(vol) >= -1 and np.amax(vol) <= 1:
         vol_tmp = np.array(vol, dtype=np.float64)
-        vol_tmp = np.multiply(vol, 1000.0)
+        vol_tmp = np.multiply(vol_tmp, 1000.0)
         vol_tmp = np.round(vol_tmp)
 
         vol_trans = np.array(vol_tmp, dtype=np.int16)
