@@ -8,6 +8,11 @@ sqlite_db: '/media/nas/sqlitedb/deepliver/finalDBNew.sql'
 # path where levelDBs shall be saved; make sure you have created this folder
 lvdb_base_folder: '/home/mbickel/master/tmp/test_clip/'   #stat-batch24-aug3-384/' lesion-only-aug17-512
 
+# Normalization algorithm
+#
+# possibilities are byte [0,255] or float [0,1]
+norm_alg: 'float'
+
 # slices (xy, xz, yz)
 #
 # specify the direction of slices, that shall be included in the dataset
