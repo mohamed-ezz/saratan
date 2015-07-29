@@ -114,7 +114,7 @@ class ImageAdapter:
         self.db.close()
 
     def add_batch(self, key, ser_img, x_dim, y_dim):
-        if self.wb == None:
+        if self.wb is None:
             self.wb = self.db.write_batch()
 
         # first create key
@@ -125,6 +125,7 @@ class ImageAdapter:
         datum.height = y_dim
         datum.width = x_dim
         datum.channels = 1
+
         datum.data = ser_img
 
         # add to batch
@@ -135,8 +136,31 @@ class ImageAdapter:
         if self.batch_counter == 1000:
             self.write()
 
+    def add_batch_float(self, key, float_img, x_dim, y_dim):
+        if self.wb is None:
+            self.wb = self.db.write_batch()
+
+        # first create key
+        key.create_key()
+
+        # now create datum
+        datum = caffe.proto.caffe_pb2.Datum()
+        datum.height = y_dim
+        datum.width = x_dim
+        datum.channels = 1
+
+        datum.float_data.extend(float_img.flat)
+
+        # add to batch
+        self.wb.put(bytes(key.get_key()), bytes(datum.SerializeToString()))
+
+        # auto write
+        self.batch_counter += 1
+        if self.batch_counter == 1000:
+            self.write()
+
     def write(self):
-        if self.wb == None:
+        if self.wb is None:
             return
 
         self.wb.write()
