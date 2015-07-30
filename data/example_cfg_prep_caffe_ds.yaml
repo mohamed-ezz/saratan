@@ -21,6 +21,12 @@ slices:
 #- xz
 #- yz
 
+# shuffle
+#
+# specify if slices and volumes shall be shuffled
+shuffle_slcs: false
+shuffle_vols: true
+
 # test ratio
 #
 # this is the ratio of the total dataset, that is inteded for testing and thus saved in a separate test database
