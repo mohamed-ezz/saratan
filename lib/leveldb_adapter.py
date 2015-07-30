@@ -8,6 +8,8 @@ import os
 import plyvel
 import caffe
 
+import ppm_helper
+
 # test
 #import nifti_helper as nh
 
@@ -191,10 +193,7 @@ class ImageAdapter:
 
     def dump_img(self, key, path):
         img = self.read_img(key)
-
-        with io.open(os.path.normpath(path + '/' + key.get_key() + '.ppm'), 'wb') as ppm:
-            ppm.write(b'P5\n' + bytes(img.shape[1]) + b' ' + bytes(img.shape[0]) + b'\n' + b'255\n')
-            ppm.write(img.tostring())
+        ppm_helper.PPM.write(img, path, key.get_key())
 
     def read_volume(self, key):
         slices = []
