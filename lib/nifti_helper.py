@@ -328,7 +328,7 @@ def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
 
     return norm
 
-def norm_hounsfield_stat(arr, c_min=0.1, c_max=0.3):
+def norm_hounsfield_stat(arr, c_min=-100, c_max=400):
     min = np.amin(arr)
 
     arr = np.array(arr, dtype=np.float64)
