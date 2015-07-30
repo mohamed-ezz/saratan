@@ -382,38 +382,44 @@ def hounsfield_to_float_stat(arr, c_min=-150, c_max=300):
     norm = np.clip(norm_hounsfield_stat(arr, c_min=c_min, c_max=c_max), 0, 1)
     return np.array(norm, dtype=np.float64)
 
-def dump_vol_to_nifti(vol, path):
+def dump_vol_to_nifti(vol, path, denorm=True):
     vol_trans = None
 
-    # transformation for [0,1] data
-    if np.amin(vol) >= 0 and np.amax(vol) <= 1:
-        vol_tmp = np.array(vol, dtype=np.float64)
-        vol_tmp = np.subtract(vol_tmp, 0.5)
-        vol_tmp = np.multiply(vol_tmp, 2000.0)
-        vol_tmp = np.round(vol_tmp)
+    # de-normalization before saving as nifti?
+    if denorm:
+        # transformation for [0,1] data
+        if np.amin(vol) >= 0 and np.amax(vol) <= 1:
+            vol_tmp = np.array(vol, dtype=np.float64)
+            vol_tmp = np.subtract(vol_tmp, 0.5)
+            vol_tmp = np.multiply(vol_tmp, 2000.0)
+            vol_tmp = np.round(vol_tmp)
 
-        vol_trans = np.array(vol_tmp, dtype=np.int16)
+            vol_trans = np.array(vol_tmp, dtype=np.int16)
 
-    # transformation for [0,255] data
-    elif np.amin(vol) >= 0 and np.amax(vol) <= 255:
-        vol_tmp = np.array(vol, dtype=np.float64)
-        vol_tmp = np.divide(vol_tmp, 255.0)
-        vol_tmp = np.subtract(vol_tmp, 0.5)
-        vol_tmp = np.multiply(vol_tmp, 2000.0)
-        vol_tmp = np.round(vol_tmp)
+        # transformation for [0,255] data
+        elif np.amin(vol) >= 0 and np.amax(vol) <= 255:
+            vol_tmp = np.array(vol, dtype=np.float64)
+            vol_tmp = np.divide(vol_tmp, 255.0)
+            vol_tmp = np.subtract(vol_tmp, 0.5)
+            vol_tmp = np.multiply(vol_tmp, 2000.0)
+            vol_tmp = np.round(vol_tmp)
 
-        vol_trans = np.array(vol_tmp, dtype=np.int16)
+            vol_trans = np.array(vol_tmp, dtype=np.int16)
 
-    # transformation for [-1,1] data
-    elif np.amin(vol) >= -1 and np.amax(vol) <= 1:
-        vol_tmp = np.array(vol, dtype=np.float64)
-        vol_tmp = np.multiply(vol_tmp, 1000.0)
-        vol_tmp = np.round(vol_tmp)
+        # transformation for [-1,1] data
+        elif np.amin(vol) >= -1 and np.amax(vol) <= 1:
+            vol_tmp = np.array(vol, dtype=np.float64)
+            vol_tmp = np.multiply(vol_tmp, 1000.0)
+            vol_tmp = np.round(vol_tmp)
 
-        vol_trans = np.array(vol_tmp, dtype=np.int16)
+            vol_trans = np.array(vol_tmp, dtype=np.int16)
 
-    # unknown range - just transform to int16
+        # unknown range - just transform to int16
+        else:
+            vol_tmp = np.round(vol)
+            vol_trans = np.array(vol_tmp, dtype=np.int16)
     else:
+        # also just transform to int16
         vol_tmp = np.round(vol)
         vol_trans = np.array(vol_tmp, dtype=np.int16)
 
