@@ -134,7 +134,8 @@ class NiftiDBHelper:
 class Segmentations:
     """Iterator for looping over all segmented niftis in the database."""
 
-    def __init__(self, path):
+    def __init__(self, path, shuffled=False):
+        self.__shuffled = shuffled
         self.data = NiftiDBHelper(path)
         self.index = 0
         self.total = self.data.q_total()
@@ -146,7 +147,10 @@ class Segmentations:
         if self.index == self.total:
             raise StopIteration
         else:
-            self.data.q_x_row(self.index)
+            if self.__shuffled:
+                self.data.q_shuffled_row()
+            else:
+                self.data.q_x_row(self.index)
             self.index += 1
             return self.data
 
