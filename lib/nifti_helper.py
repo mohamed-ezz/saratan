@@ -265,7 +265,7 @@ def xy_slices(img):
 
     dat = get_img_data(img)
 
-    for i in xrange(z_max - 1):
+    for i in xrange(z_max):
         yield np.rot90(dat[:, :, i])
 
 def xz_slices(img):
@@ -274,7 +274,7 @@ def xz_slices(img):
 
     dat = get_img_data(img)
 
-    for i in xrange(y_max - 1):
+    for i in xrange(y_max):
         yield np.rot90(dat[:, i, :])
 
 def yz_slices(img):
@@ -283,7 +283,7 @@ def yz_slices(img):
 
     dat = get_img_data(img)
 
-    for i in xrange(x_max - 1):
+    for i in xrange(x_max):
         yield np.rot90(dat[i, :, :])
 
 def serialize_slice(slc):

@@ -8,7 +8,8 @@ import os
 import plyvel
 import caffe
 
-import ppm_helper
+import imp
+ppm_helper = imp.load_source('ppm_helper', os.path.normpath('../lib/ppm_helper.py'))
 
 # test
 #import nifti_helper as nh
@@ -34,6 +35,10 @@ class Key:
         if counter < 0 or counter > 99999999:
             raise ValueError("Counter must be between 0 and 99,999,999")
         self.counter = counter
+
+    def inc_counter(self):
+        self.counter += 1
+        return self.counter
 
     def get_seg_uid(self):
         return self.seg_uid
@@ -170,55 +175,139 @@ class ImageAdapter:
         self.batch_counter = 0
 
     @staticmethod
-    def datum_to_img(self, datum):
-        datum_obj = caffe.proto.caffe_pb2.Datum()
-        datum_obj.ParseFromString(datum)
+    def datum_to_img(datum):
 
-        flat_img = np.fromstring(datum.data, dtype=np.uint8)
-        img = flat_img.reshape(datum.height, datum.width)
+        try:
+            datum_obj = caffe.proto.caffe_pb2.Datum()
+            datum_obj.ParseFromString(bytes(datum))
 
-        return img
+            flat_img = np.fromstring(datum_obj.data, dtype=np.uint8)
+            img = flat_img.reshape(datum_obj.height, datum_obj.width)
+
+            return img
+        except:
+            raise ValueError("Error. String can't be deserialized to datum.")
 
     def read_img(self, key):
         key.create_key()
         raw_datum = self.db.get(bytes(key.get_key()))
 
-        datum = caffe.proto.caffe_pb2.Datum()
-        datum.ParseFromString(raw_datum)
+        try:
+            datum = caffe.proto.caffe_pb2.Datum()
+            datum.ParseFromString(raw_datum)
 
-        flat_img = np.fromstring(datum.data, dtype=np.uint8)
-        img = flat_img.reshape(datum.height, datum.width)
+            flat_img = np.fromstring(datum.data, dtype=np.uint8)
+            img = flat_img.reshape(datum.height, datum.width)
 
-        return img
+            return img
+        except:
+            raise ValueError('Error. No datum blob at key: ' + str(key.get_key))
 
     def dump_img(self, key, path):
         img = self.read_img(key)
         ppm_helper.PPM.write(img, path, key.get_key())
 
-    def read_volume(self, key):
-        slices = []
+    def read_volume(self, key, mod=0):
+        slices = {}
+        stack = []
         vol = None
+        w_key = Key()
 
-        # first try to get the first slice
-        try:
-            key.set_slice_count(0)
-            slices.append(self.read_img(key))
-        except:
-            raise ValueError("Can't find starting slice: " + key.get_key())
+        # w_key = Key()
+        # found_key = Key()
+        #
+        # key.disassemble_key()
+        #
+        # # search the first slice
+        # try:
+        #     found = False
+        #
+        #     # use current key as a starting point for the search
+        #     if not found:
+        #         print('backward')
+        #         for j, k in enumerate(self.db.iterator(start=bytes(key.get_key()), include_value=False, reverse=True)):
+        #             if j > 5000:
+        #                 break
+        #
+        #             w_key.set_key(k)
+        #             w_key.disassemble_key()
+        #             #print(w_key.get_key())
+        #
+        #             if key.get_seg_uid() != w_key.get_seg_uid():
+        #                 break
+        #
+        #             if w_key.get_slice_mod() == mod \
+        #                     and w_key.get_slice_count() == 0:
+        #                 # found it
+        #                 found_key.set_key(w_key.get_key())
+        #                 found_key.disassemble_key()
+        #                 found = True
+        #                 break
+        #
+        #     # now search backward
+        #     if not found:
+        #         print('now forward')
+        #         for j, k in enumerate(self.db.iterator(start=bytes(key.get_key()), include_value=False)):
+        #             if j > 5000:
+        #                 break
+        #
+        #             w_key.set_key(k)
+        #             w_key.disassemble_key()
+        #             #print(w_key.get_key())
+        #
+        #             if key.get_seg_uid() != w_key.get_seg_uid():
+        #                 break
+        #
+        #             if w_key.get_slice_mod() == mod \
+        #                     and w_key.get_slice_count() == 0 \
+        #                     and key.get_seg_uid() == w_key.get_seg_uid():
+        #                 # found it
+        #                 found_key.set_key(w_key.get_key())
+        #                 found_key.disassemble_key()
+        #                 found = True
+        #                 break
+        #
+        #     if found:
+        #         slices.append(self.read_img(found_key))
+        #     else:
+        #         raise ValueError("Can't find starting slice.")
+        # except:
+        #     raise ValueError("Can't find starting slice: " + key.get_key())
 
         # now iterate over the slices until the end is reached
         i = 0
-        while True:
+        for k, v in self.db:
             i += 1
-            try:
-                key.set_slice_count(i)
-                slices.append(self.read_img(key))
-            except:
-                break
+            if i % 200 == 0:
+                print(i)
+
+            w_key.set_key(k)
+            w_key.disassemble_key()
+
+            if key.get_slice_mod() != mod:
+                # wrong slice mod
+                continue
+
+            if key.get_slice_type() != w_key.get_slice_type():
+                # wrong slice type
+                continue
+
+            if key.get_type() != w_key.get_type():
+                # wrong type
+                continue
+
+            if key.get_seg_uid() == w_key.get_seg_uid():
+                # append slice
+                slices.update({w_key.get_slice_count(): self.datum_to_img(v)})
+                #slices.append(self.datum_to_img(v))
+
+        for key, value in sorted(slices.items()):
+            stack.append(value)
 
         # add up slices to volume
-        vol = np.dstack(tuple(slices))
+        vol = np.dstack(tuple(stack))
 
+        # swap axes depending on slicing
         if key.get_slice_type() == 'xy':
             return vol
         elif key.get_slice_type() == 'xz':
