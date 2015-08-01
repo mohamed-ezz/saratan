@@ -196,10 +196,17 @@ class ImageAdapter:
             datum = caffe.proto.caffe_pb2.Datum()
             datum.ParseFromString(raw_datum)
 
-            flat_img = np.fromstring(datum.data, dtype=np.uint8)
-            img = flat_img.reshape(datum.height, datum.width)
+            #flat_img = np.fromstring(datum.data, dtype=dtype)
+            #img = flat_img.reshape(datum.height, datum.width)
 
-            return img
+	    if len(datum.data):
+        	return np.fromstring(datum.data, dtype=np.uint8).reshape(datum.channels,
+									 datum.height,
+									 datum.width)[0, :, :]
+	    else:
+        	return np.array(datum.float_data).astype(float).reshape(datum.channels,
+									datum.height,
+									datum.width)[0, :, :]
         except:
             raise ValueError('Error. No datum blob at key: ' + str(key.get_key))
 
