@@ -375,11 +375,11 @@ def hounsfield_to_byte_stat(arr, c_min=-150, c_max=300):
     return np.array(norm, dtype=np.uint8)
 
 def hounsfield_to_float_dyn(arr, c_min=0.1, c_max=0.3):
-    norm = np.clip(norm_hounsfield_dyn(arr, c_min=c_min, c_max=c_max), 0, 1)
+    norm = np.clip(np.multiply(norm_hounsfield_dyn(arr, c_min=c_min, c_max=c_max), 0.00390625), 0, 1)
     return np.array(norm, dtype=np.float64)
 
 def hounsfield_to_float_stat(arr, c_min=-150, c_max=300):
-    norm = np.clip(norm_hounsfield_stat(arr, c_min=c_min, c_max=c_max), 0, 1)
+    norm = np.clip(np.multiply(norm_hounsfield_stat(arr, c_min=c_min, c_max=c_max), 0.00390625), 0, 1)
     return np.array(norm, dtype=np.float64)
 
 def dump_vol_to_nifti(vol, path, denorm=True):

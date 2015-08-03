@@ -181,8 +181,15 @@ class ImageAdapter:
             datum_obj = caffe.proto.caffe_pb2.Datum()
             datum_obj.ParseFromString(bytes(datum))
 
-            flat_img = np.fromstring(datum_obj.data, dtype=np.uint8)
-            img = flat_img.reshape(datum_obj.height, datum_obj.width)
+            # flat_img = np.fromstring(datum_obj.data, dtype=np.uint8)
+            # img = flat_img.reshape(datum_obj.height, datum_obj.width)
+
+            if len(datum.data):
+                img = np.fromstring(datum_obj.data, dtype=np.uint8).reshape((datum_obj.height,
+                                                                             datum_obj.width))
+            else:
+                img = np.array(datum_obj.float_data).astype(np.float64).reshape((datum_obj.height,
+                                                                            datum_obj.width))
 
             return img
         except:
@@ -199,14 +206,12 @@ class ImageAdapter:
             #flat_img = np.fromstring(datum.data, dtype=dtype)
             #img = flat_img.reshape(datum.height, datum.width)
 
-	    if len(datum.data):
-        	return np.fromstring(datum.data, dtype=np.uint8).reshape(datum.channels,
-									 datum.height,
-									 datum.width)[0, :, :]
-	    else:
-        	return np.array(datum.float_data).astype(float).reshape(datum.channels,
-									datum.height,
-									datum.width)[0, :, :]
+            if len(datum.data):
+                return np.fromstring(datum.data, dtype=np.uint8).reshape((datum.height,
+                                                                         datum.width))
+            else:
+                return np.array(datum.float_data).astype(np.float64).reshape((datum.height,
+                                                                        datum.width))
         except:
             raise ValueError('Error. No datum blob at key: ' + str(key.get_key))
 
