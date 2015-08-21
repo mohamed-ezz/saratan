@@ -12,6 +12,8 @@ import random
 import imp
 f3 = imp.load_source('f3', os.path.normpath('../lib/fire3db.py'))
 
+import SimpleITK as itk
+
 ##
 #
 # Methods requiring initialization of database.
@@ -134,7 +136,8 @@ class NiftiDBHelper:
 class Segmentations:
     """Iterator for looping over all segmented niftis in the database."""
 
-    def __init__(self, path):
+    def __init__(self, path, shuffled=False):
+        self.__shuffled = shuffled
         self.data = NiftiDBHelper(path)
         self.index = 0
         self.total = self.data.q_total()
@@ -146,7 +149,10 @@ class Segmentations:
         if self.index == self.total:
             raise StopIteration
         else:
-            self.data.q_x_row(self.index)
+            if self.__shuffled:
+                self.data.q_shuffled_row()
+            else:
+                self.data.q_x_row(self.index)
             self.index += 1
             return self.data
 
@@ -203,7 +209,6 @@ def load_nifti(path):
     """
     return nib.load(os.path.normpath(path))
 
-
 def show_slices(slices):
     """ Function to display row of image slices """
     fig, axes = plt.subplots(1, len(slices))
@@ -212,7 +217,6 @@ def show_slices(slices):
             axes.imshow(slice, cmap="gray")
         else:
             axes[i].imshow(slice, cmap="gray")
-
 
 def get_dim(img):
     """
@@ -226,11 +230,9 @@ def get_dim(img):
         sys.stderr.write('Error, CT-Image must have 3 dimensions.')
         raise Exception
 
-
 def get_img_data(img):
     """Get image data of img as numpy tensor"""
     return img.get_data()
-
 
 def plot_at_center(img):
     """Takes a nibabel nifti wrapper and prints out three centered slices"""
@@ -246,7 +248,6 @@ def plot_at_center(img):
     plt.suptitle("Centered slices for image (xy, xz, yz)")
     plt.show()
 
-
 def plot_at(x, y, z, img):
     """Takes a nibabel nifti wrapper and prints out three slices a (x, y, z)"""
     x_max, y_max, z_max = get_dim(img)
@@ -260,16 +261,14 @@ def plot_at(x, y, z, img):
         plt.suptitle("Slices centered at (" + str(x) + ", " + str(y) + ", " + str(z) + "). (xy, xz, yz)")
         plt.show()
 
-
 def xy_slices(img):
     """Takes a nibabel nifti wrapper and returns a iterator over all xy slices"""
     _, _, z_max = get_dim(img)
 
     dat = get_img_data(img)
 
-    for i in xrange(z_max - 1):
+    for i in xrange(z_max):
         yield np.rot90(dat[:, :, i])
-
 
 def xz_slices(img):
     """Takes a nibabel nifti wrapper and returns a iterator over all xz slices"""
@@ -277,9 +276,8 @@ def xz_slices(img):
 
     dat = get_img_data(img)
 
-    for i in xrange(y_max - 1):
+    for i in xrange(y_max):
         yield np.rot90(dat[:, i, :])
-
 
 def yz_slices(img):
     """Takes a nibabel nifti wrapper and returns a iterator over all yz slices"""
@@ -287,9 +285,8 @@ def yz_slices(img):
 
     dat = get_img_data(img)
 
-    for i in xrange(x_max - 1):
+    for i in xrange(x_max):
         yield np.rot90(dat[i, :, :])
-
 
 def serialize_slice(slc):
     """Serialize numpy matrix to byte stream."""
@@ -298,16 +295,12 @@ def serialize_slice(slc):
     else:
         return slc.tostring()
 
-
-def hounsfield_to_byte_dyn(arr, c_min=0.1, c_max=0.3):
-    """
-    Numpy array with hounsfield units will be clipped for contrast enhancement and then normalized to np.uint8.
-    Standard clipping is set to favor contrast enhanced tissue. If you want to have a higher bone resolution, set c_max at least to 0.8
-    """
-
+def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
     # calc min and max
     min = np.amin(arr)
     max = np.amax(arr)
+
+    arr = np.array(arr, dtype=np.float64)
 
     if min <= 0:
         # clip to c_min and c_max
@@ -335,11 +328,12 @@ def hounsfield_to_byte_dyn(arr, c_min=0.1, c_max=0.3):
     else:  # don't divide through 0
         norm = np.multiply(slc_0, 255)
 
-    return np.array(norm, dtype=np.uint8)
+    return norm
 
-
-def hounsfield_to_byte_stat(arr, c_min=-150, c_max=300):
+def norm_hounsfield_stat(arr, c_min=-100, c_max=400):
     min = np.amin(arr)
+
+    arr = np.array(arr, dtype=np.float64)
 
     if min <= 0:
         # clip
@@ -367,7 +361,77 @@ def hounsfield_to_byte_stat(arr, c_min=-150, c_max=300):
     else:  # don't divide through 0
         norm = np.multiply(slc_0, 255)
 
+    return norm
+
+def hounsfield_to_byte_dyn(arr, c_min=0.1, c_max=0.3):
+    """
+    Numpy array with hounsfield units will be clipped for contrast enhancement and then normalized to np.uint8.
+    Standard clipping is set to favor contrast enhanced tissue. If you want to have a higher bone resolution, set c_max at least to 0.8
+    """
+
+    norm = np.clip(np.round(norm_hounsfield_dyn(arr, c_min=c_min, c_max=c_max)), 0, 255)
     return np.array(norm, dtype=np.uint8)
+
+def hounsfield_to_byte_stat(arr, c_min=-150, c_max=300):
+    norm = np.clip(np.round(norm_hounsfield_stat(arr, c_min=c_min, c_max=c_max)), 0, 255)
+    return np.array(norm, dtype=np.uint8)
+
+def hounsfield_to_float_dyn(arr, c_min=0.1, c_max=0.3):
+    norm = np.clip(np.multiply(norm_hounsfield_dyn(arr, c_min=c_min, c_max=c_max), 0.00390625), 0, 1)
+    return np.array(norm, dtype=np.float64)
+
+def hounsfield_to_float_stat(arr, c_min=-150, c_max=300):
+    norm = np.clip(np.multiply(norm_hounsfield_stat(arr, c_min=c_min, c_max=c_max), 0.00390625), 0, 1)
+    return np.array(norm, dtype=np.float64)
+
+def dump_vol_to_nifti(vol, path, denorm=True):
+    vol_trans = None
+
+    # de-normalization before saving as nifti?
+    if denorm:
+        # transformation for [0,1] data
+        if np.amin(vol) >= 0 and np.amax(vol) <= 1:
+            vol_tmp = np.array(vol, dtype=np.float64)
+            vol_tmp = np.subtract(vol_tmp, 0.5)
+            vol_tmp = np.multiply(vol_tmp, 2000.0)
+            vol_tmp = np.round(vol_tmp)
+
+            vol_trans = np.array(vol_tmp, dtype=np.int16)
+
+        # transformation for [0,255] data
+        elif np.amin(vol) >= 0 and np.amax(vol) <= 255:
+            vol_tmp = np.array(vol, dtype=np.float64)
+            vol_tmp = np.divide(vol_tmp, 255.0)
+            vol_tmp = np.subtract(vol_tmp, 0.5)
+            vol_tmp = np.multiply(vol_tmp, 2000.0)
+            vol_tmp = np.round(vol_tmp)
+
+            vol_trans = np.array(vol_tmp, dtype=np.int16)
+
+        # transformation for [-1,1] data
+        elif np.amin(vol) >= -1 and np.amax(vol) <= 1:
+            vol_tmp = np.array(vol, dtype=np.float64)
+            vol_tmp = np.multiply(vol_tmp, 1000.0)
+            vol_tmp = np.round(vol_tmp)
+
+            vol_trans = np.array(vol_tmp, dtype=np.int16)
+
+        # unknown range - just transform to int16
+        else:
+            vol_tmp = np.round(vol)
+            vol_trans = np.array(vol_tmp, dtype=np.int16)
+    else:
+        # also just transform to int16
+        vol_tmp = np.round(vol)
+        vol_trans = np.array(vol_tmp, dtype=np.int16)
+
+    # nibabel way: simply use identity matrix as affine transformation
+    #img = nib.Nifti1Image(vol_trans, np.eye(4))
+    #nib.save(img, path)
+
+    # SimpleITK way:
+    img = itk.GetImageFromArray(vol_trans)
+    itk.WriteImage(img, path)
 
 
 def main():
