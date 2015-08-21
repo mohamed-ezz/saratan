@@ -2,17 +2,13 @@ __author__ = 'mbickel'
 
 import numpy as np
 import re
-import io
 import os
 
 import plyvel
 import caffe
 
-import imp
-ppm_helper = imp.load_source('ppm_helper', os.path.normpath('../lib/ppm_helper.py'))
+import lib.ppm_helper as ppm_helper
 
-# test
-#import nifti_helper as nh
 
 class Key:
     def __init__(self):

@@ -9,8 +9,7 @@ import os
 import sys
 import random
 
-import imp
-f3 = imp.load_source('f3', os.path.normpath('../lib/fire3db.py'))
+import lib.fire3db as f3
 
 import SimpleITK as itk
 
