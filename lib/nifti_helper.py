@@ -12,6 +12,8 @@ import random
 import imp
 f3 = imp.load_source('f3', os.path.normpath('../lib/fire3db.py'))
 
+import SimpleITK as itk
+
 ##
 #
 # Methods requiring initialization of database.
@@ -423,10 +425,13 @@ def dump_vol_to_nifti(vol, path, denorm=True):
         vol_tmp = np.round(vol)
         vol_trans = np.array(vol_tmp, dtype=np.int16)
 
-    # simply use identity matrix as affine transformation
-    img = nib.Nifti1Image(vol_trans, np.eye(4))
+    # nibabel way: simply use identity matrix as affine transformation
+    #img = nib.Nifti1Image(vol_trans, np.eye(4))
+    #nib.save(img, path)
 
-    nib.save(img, path)
+    # SimpleITK way:
+    img = itk.GetImageFromArray(vol_trans)
+    itk.WriteImage(img, path)
 
 
 def main():
