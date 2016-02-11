@@ -28,20 +28,23 @@ def denormalize_img(arr):
 	new = (arr - min) * (255.0/(max-min))
 	return new.astype(np.uint8)
 
-def visualize_img_seg(dbimg, dbseg, outdir, N=40):
+def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40):
 	""" Visualize images and their segmentation labels on top.
 	The function loops through all images found in the database and keeps visualizing """
 	itimg = dbimg.iterator()
 	itseg = dbseg.iterator()
 	print 'Started Visualize'
-	for i in range(N):
-		print 'processing image', i
+	for i in range(N_start + N):
 		try:
 			kimg,vimg = itimg.next()
 			kseg,vseg = itseg.next()
+			
+			if i < N_start: #skip
+				continue
 		except StopIteration:
 			break 
 		
+		print 'processing image', i
 		img = ldbutil.to_numpy_matrix(vimg)
 		seg = ldbutil.to_numpy_matrix(vseg)
 		#Print histogram of labels
@@ -79,6 +82,8 @@ parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpForm
 parser.add_argument("-dbimg", required=True, help="Leveldb path of images")
 parser.add_argument("-dbseg", required=True, help="Leveldb path of the corresponding segmentation labels")
 parser.add_argument("-o",required=True, help="Output directory to write PNG images to.")
+parser.add_argument("-s",default=0, type=int, help="Index of slice to start at.")
+parser.add_argument("-n",default=40, type=int, help="Number of slices to save.")
 args = parser.parse_args()
 
 # Open database
@@ -93,7 +98,7 @@ except:
 	dbseg=plyvel.DB(newsegpath)
 	
 print 'Calling'
-visualize_img_seg(dbimg, dbseg, args.o)
+visualize_img_seg(dbimg, dbseg, args.o, args.s, args.n)
 
 
 
