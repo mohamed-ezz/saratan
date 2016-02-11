@@ -9,6 +9,7 @@ according to cmd arguments
 '''
 # Add project to search path
 import os, sys
+from tqdm import tqdm, trange
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import plyvel
@@ -34,7 +35,7 @@ def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40):
 	itimg = dbimg.iterator()
 	itseg = dbseg.iterator()
 	print 'Started Visualize'
-	for i in range(N_start + N):
+	for i in trange(N_start + N):
 		try:
 			kimg,vimg = itimg.next()
 			kseg,vseg = itseg.next()
@@ -44,11 +45,10 @@ def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40):
 		except StopIteration:
 			break 
 		
-		print 'processing image', i
 		img = ldbutil.to_numpy_matrix(vimg)
 		seg = ldbutil.to_numpy_matrix(vseg)
 		#Print histogram of labels
-		print np.where(seg==0)[0].shape, np.where(seg==1)[0].shape, np.where(seg==2)[0].shape
+		#print np.where(seg==0)[0].shape, np.where(seg==1)[0].shape, np.where(seg==2)[0].shape
 		
 		assert img.shape == seg.shape, "Image and Label have different dimensions: %s and %s respect." % (str(img.shape),str(seg.shape))
 		# Denormalize image values
@@ -67,7 +67,7 @@ def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40):
 #		IPython.embed()
 		highlight[seg==2, 1] = 255
 		
-		print img.min(), img.max()
+		#print img.min(), img.max()
 		highlight = highlight + img
 		np.clip(highlight, 0, 255,highlight)
 		writer = png.Writer(img.shape[1], img.shape[0])
