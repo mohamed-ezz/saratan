@@ -15,13 +15,13 @@ import plyvel
 import argparse
 import numpy as np
 from caffe.proto import caffe_pb2
-import leveldb_utils as ldbutil
+import lutils
 	
 def find_datatype(leveldb):
 	""" Return the numpy type of the pixels stored in the given leveldb. Be it in datum.data or datum.float_data """
-	datum = ldbutil.nth_datum(leveldb, 0)
+	datum = lutils.nth_datum(leveldb, 0)
 	if len(datum.data) > 0:
-		return ldbutil.get_data_type(datum)
+		return lutils.get_data_type(datum)
 	elif len(datum.float_data) > 0:
 		return np.float
 	else:
@@ -34,12 +34,7 @@ def find_image_dimension(leveldb):
 	
 	return datum.height, datum.width, datum.channels
 
-def find_keycount(leveldb):
-	""" Takes a plyvel.DB instance and returns number of keys found """
-	count = 0
-	for _,_ in leveldb.iterator():
-		count += 1
-	return count
+
 
 def find_pixel_range(leveldb, n_slices=100):
 	""" Gets min and max values found in all the matrices (values of the leveldb) """
@@ -49,7 +44,7 @@ def find_pixel_range(leveldb, n_slices=100):
 	maxv = -999999
 	for i in range(n_slices):
 		_, v = it.next()
-		matrix = ldbutil.to_numpy_matrix(v)
+		matrix = lutils.to_numpy_matrix(v)
 		minv = min(minv, matrix.min())
 		maxv = max(maxv, matrix.max())
 	return minv, maxv
@@ -69,7 +64,7 @@ except:
 print "Image dimension : ", find_image_dimension(db)
 print "Pixel range     : ", find_pixel_range(db)
 print "Data type       :", find_datatype(db)
-print "Number of Keys  : ", find_keycount(db)
+print "Number of Keys  : ", lutils.find_keycount(db)
 
 
 

@@ -7,6 +7,14 @@ import plyvel
 import numpy as np
 from caffe.proto import caffe_pb2
 
+def denormalize_img_255(arr):
+	""" Denormalizes a nparray to 0-255 values """
+	min = arr.min()
+	max = arr.max()
+
+	new = (arr - min) * (255.0/(max-min))
+	return new.astype(np.uint8)
+
 def leveldb_arrays(leveldbdir):
 	""" Generator. Given leveldb directory, iterate the stored data as numpy arrays. Yields (Key, NumpyArray) """
 	db = plyvel.DB(leveldbdir)
@@ -33,6 +41,13 @@ def get_data_type(datum):
 	types = {1:np.int8, 2:np.int16, 4:np.int32, 8:np.int64}
 	type_ = types[int(int_size)]
 	return type_
+
+def find_keycount(leveldb):
+	""" Takes a plyvel.DB instance and returns number of keys found """
+	count = 0
+	for _,_ in leveldb.iterator():
+		count += 1
+	return count
 
 def to_numpy_matrix(v):
 	""" Convert leveldb value to numpy matrix of shape N x N """

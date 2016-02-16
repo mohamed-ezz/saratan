@@ -9,25 +9,20 @@ according to cmd arguments
 '''
 # Add project to search path
 import os, sys
-from tqdm import tqdm, trange
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import lutils
 
+
+from tqdm import tqdm, trange
 import plyvel
 import argparse
 import numpy as np
 import sys, os
 from caffe.proto import caffe_pb2
 import png
-import leveldb_utils as ldbutil
 
 	
-def denormalize_img(arr):
-	""" Denormalizes a nparray to 0-255 values """
-	min = arr.min()
-	max = arr.max()
 
-	new = (arr - min) * (255.0/(max-min))
-	return new.astype(np.uint8)
 
 def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40):
 	""" Visualize images and their segmentation labels on top.
@@ -45,14 +40,14 @@ def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40):
 		except StopIteration:
 			break 
 		
-		img = ldbutil.to_numpy_matrix(vimg)
-		seg = ldbutil.to_numpy_matrix(vseg)
+		img = lutils.to_numpy_matrix(vimg)
+		seg = lutils.to_numpy_matrix(vseg)
 		#Print histogram of labels
 		#print np.where(seg==0)[0].shape, np.where(seg==1)[0].shape, np.where(seg==2)[0].shape
 		
 		assert img.shape == seg.shape, "Image and Label have different dimensions: %s and %s respect." % (str(img.shape),str(seg.shape))
 		# Denormalize image values
-		img = denormalize_img(img)
+		img = lutils.denormalize_img_255(img)
 		
 		#Convert to Color image (add a channel)
 		img = np.expand_dims(img, 2)
@@ -91,9 +86,9 @@ try:
 	dbimg=plyvel.DB(args.dbimg)
 	dbseg=plyvel.DB(args.dbseg)
 except:
-	newimgpath = os.path.join(args.db,"train_img")
-	newsegpath = os.path.join(args.db,"train_seg")
-	print 'Path have no leveldb, trying %s , and %s' % (newimgpath, newsegpath)
+	newimgpath = os.path.join(args.dbimg,"train_img")
+	newsegpath = os.path.join(args.dbseg,"train_seg")
+	print 'Given path has no leveldb, trying %s , and %s' % (newimgpath, newsegpath)
 	dbimg=plyvel.DB(newimgpath)
 	dbseg=plyvel.DB(newsegpath)
 	
