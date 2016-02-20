@@ -24,7 +24,7 @@ import png
 	
 
 
-def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40):
+def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40, with_raw_img=False):
 	""" Visualize images and their segmentation labels on top.
 	The function loops through all images found in the database and keeps visualizing """
 	itimg = dbimg.iterator()
@@ -45,7 +45,7 @@ def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40):
 		#Print histogram of labels
 		#print np.where(seg==0)[0].shape, np.where(seg==1)[0].shape, np.where(seg==2)[0].shape
 		
-		assert img.shape == seg.shape, "Image and Label have different dimensions: %s and %s respect." % (str(img.shape),str(seg.shape))
+		assert img.shape == seg.shape, "Image and Label have different dimensions: %s and %s resp." % (str(img.shape),str(seg.shape))
 		# Denormalize image values
 		img = lutils.denormalize_img_255(img)
 		
@@ -57,20 +57,20 @@ def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40):
 		#Build seg image such that :  Liver->Red , Lesion->Green
 		# ex: R channel is 255 only for things labeled with Liver
 		highlight = np.zeros(img.shape)
-		highlight[seg==1, 0] = 255
-#		print highlight
-#		IPython.embed()
-		highlight[seg==2, 1] = 255
+		highlight[seg==1, 0] = 80
+		highlight[seg==2, 1] = 80
 		
-		#print img.min(), img.max()
 		highlight = highlight + img
 		np.clip(highlight, 0, 255,highlight)
+
 		writer = png.Writer(img.shape[1], img.shape[0])
+		# Write segmentation+image
 		file = open(os.path.join(outdir,"Seg_"+kimg+".png"), 'w')
 		writer.write(file, np.reshape(highlight, (-1, highlight.shape[0]*3)))
-		file = open(os.path.join(outdir,"Img_"+kimg+".png"), 'w')
-		#IPython.embed()
-		writer.write(file, np.reshape(img, (-1, highlight.shape[0]*3)))
+		# Write raw image
+		if with_raw_img:
+			file = open(os.path.join(outdir,"Img_"+kimg+".png"), 'w')
+			writer.write(file, np.reshape(img, (-1, highlight.shape[0]*3)))
 	
 	
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,description="Reads leveldb and prints some stats")
@@ -79,6 +79,7 @@ parser.add_argument("-dbseg", required=True, help="Leveldb path of the correspon
 parser.add_argument("-o",required=True, help="Output directory to write PNG images to.")
 parser.add_argument("-s",default=0, type=int, help="Index of slice to start at.")
 parser.add_argument("-n",default=40, type=int, help="Number of slices to save.")
+parser.add_argument("--with-raw-img",dest='with_raw_img', default=False, action="store_true", help="Writes also a raw image without overlayed label")
 args = parser.parse_args()
 
 # Open database
@@ -93,7 +94,7 @@ except:
 	dbseg=plyvel.DB(newsegpath)
 	
 print 'Calling'
-visualize_img_seg(dbimg, dbseg, args.o, args.s, args.n)
+visualize_img_seg(dbimg, dbseg, args.o, args.s, args.n, with_raw_img = args.with_raw_img)
 
 
 
