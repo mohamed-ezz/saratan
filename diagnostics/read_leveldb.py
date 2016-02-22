@@ -51,6 +51,7 @@ def find_pixel_range(leveldb, n_slices=100):
 	
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,description="Reads leveldb and prints some stats")
 parser.add_argument("-db", required=True)
+parser.add_argument("-hist", default=None, nargs='+', type=int, help="list of values to count number of occurences for. e.g. -hist 0 1 2")
 args = parser.parse_args()
 
 # Open database
@@ -64,8 +65,9 @@ except:
 print "Image dimension : ", find_image_dimension(db)
 print "Pixel range     : ", find_pixel_range(db)
 print "Data type       :", find_datatype(db)
-print "Number of Keys  : ", lutils.find_keycount(db)
-
+hist, keycount = lutils.find_keycount(db,args.hist)
+print "Number of Keys  : ", keycount
+print "Value histogram :", str(hist)
 
 
 

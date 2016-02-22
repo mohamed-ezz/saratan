@@ -42,12 +42,23 @@ def get_data_type(datum):
 	type_ = types[int(int_size)]
 	return type_
 
-def find_keycount(leveldb):
-	""" Takes a plyvel.DB instance and returns number of keys found """
+def find_keycount(leveldb, count_values=None):
+	""" Takes a plyvel.DB instance and returns number of keys found and count of each value. 
+	count_values is a list of values to count, e.g. count_values=[0,1,2] will return [count of 1s, count of 2s, count of 3s]
+	if count_values is None, return value of this function is [],key_count"""
 	count = 0
-	for _,_ in leveldb.iterator():
+	total_value_counts = np.array([0]*len(count_values or []))
+	for _,v in leveldb.iterator():
 		count += 1
-	return count
+		
+		if count_values is not None:
+			array = to_numpy_matrix(v)
+			current_count = np.array([0]*len(count_values))
+			for i,val in enumerate(count_values):
+				current_count[i] = np.sum(array==val)
+			total_value_counts += current_count
+			
+	return total_value_counts, count
 
 def to_numpy_matrix(v):
 	""" Convert leveldb value to numpy matrix of shape N x N """
