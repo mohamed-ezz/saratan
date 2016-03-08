@@ -9,6 +9,8 @@ import scipy.misc, scipy.ndimage.interpolation
 from tqdm import tqdm 
 import plyvel
 from itertools import izip
+import logging
+from contextlib import closing
 
 N_PROC = config.N_PROC
 IMG_DTYPE = np.float
@@ -344,6 +346,7 @@ def process_img_slice(img_seg):
 	seg = to_scale(seg)
 	
 	imgs,segs = augment(img, seg)
+	
 	assert len(imgs)==len(segs), "Augmentation yielded different number of images and segmentations: "+str(len(imgs))+" vs "+str(len(segs))
 	# Pre-write (final) processing
 	for i in range(len(imgs)):
@@ -365,40 +368,47 @@ def process_volume(uid, volume_file, seg_file):
 	Puts them in datums
 	Returns keys and values for both img and seg databases"""
 	
-	ppool=Pool(N_PROC)
-	#print "Reading volume uid",uid
-	# LOAD NIFTIS
-	volume = nibabel.load(volume_file).get_data()
-	volume = np.rot90(volume)
-	volume = np.transpose(volume, (2,0,1)) #make first index for slice index
-	segmentation = nibabel.load(seg_file).get_data()
-	segmentation = np.rot90(segmentation)
-	segmentation = np.transpose(segmentation, (2,0,1))
-	assert volume.shape == segmentation.shape, "Volume and segmentation have different shapes: %s vs. %s" % (str(volume.shape),str(segmentation.shape))
-
-	#print "Filtering volume uid",uid
-	# FILTER RELEVANT SLICES
-	# Determine indices of relevant slices (in parallel)
-	#print segmentation.shape
-	idx_relevant_slices = np.where(ppool.map(is_relevant_slice, segmentation))[0]
-	# Take only relevant slices
-	volume = volume[idx_relevant_slices]
-	segmentation = segmentation[idx_relevant_slices]
-
-	#print "Process/Augment volume uid", uid
-	# PROCESS SLICES
-	# Given list of (img,seg) tuples, returns list of (img volume, seg volume) tuples
-	# Each slice becomes a volume "due to augmentation"
-	list_of_imgsvol_segsvol= ppool.map(process_img_slice, izip(volume,segmentation))
-	ppool.close()
+	with closing(Pool(N_PROC)) as ppool:
+		logging.info("Reading volume uid %i",uid)
+		# LOAD NIFTIS
+		volume = nibabel.load(volume_file).get_data()
+		volume = np.rot90(volume)
+		volume = np.transpose(volume, (2,0,1)) #make first index for slice index
+		segmentation = nibabel.load(seg_file).get_data()
+		segmentation = np.rot90(segmentation)
+		segmentation = np.transpose(segmentation, (2,0,1))
+		assert volume.shape == segmentation.shape, "Volume and segmentation have different shapes: %s vs. %s" % (str(volume.shape),str(segmentation.shape))
 	
-	#print 'Zipping..'
+		logging.info("Filtering volume uid %i",uid)
+		# FILTER RELEVANT SLICES
+		# Determine indices of relevant slices (in parallel)
+		logging.info(segmentation.shape)
+		logging.info(volume.shape)
+		idx_relevant_slices = np.where(ppool.map(is_relevant_slice, segmentation))[0]
+		# Bail out to avoid errors
+		if len(idx_relevant_slices) == 0:
+			return [],[],[],[]
+	
+		# Take only relevant slices
+		volume = volume[idx_relevant_slices]
+		segmentation = segmentation[idx_relevant_slices]
+	
+		logging.info("Process/Augment volume uid %i", uid)
+		# PROCESS SLICES
+		# Given list of (img,seg) tuples, returns list of (img volume, seg volume) tuples
+		# Each slice becomes a volume "due to augmentation"
+		list_of_imgsvol_segsvol= ppool.map(process_img_slice, izip(volume,segmentation))
+		
+	logging.info(segmentation.shape)
+	logging.info(volume.shape)
+	logging.info('Zipping uid %i',uid)
+	logging.info("Len if list_imgsvol_segsvol %i", len(list_of_imgsvol_segsvol))
 	# now make it a tuple (list of img volumes, list of seg volumes)
 	imgvols, segvols = izip(*list_of_imgsvol_segsvol) #e.g., imvgols is a list of (17,388,388) arrays
 	# then make it one large img volume, and one large seg volume (volume having all original images and their augmentations)
 	# so the resulting volume's first dimension = original number of slices * augmentation factor
 	#for i in imgvols: print i.shape
-	#print 'Concatenating...'
+	logging.info('Concatenating uid %i',uid)
 	volume       = np.concatenate(imgvols, axis=0) # join all volumes into one big volume
 	segmentation = np.concatenate(segvols, axis=0)
 
@@ -406,7 +416,7 @@ def process_volume(uid, volume_file, seg_file):
 	n_slices = volume.shape[0]
 	uids=[uid]*n_slices
 	slice_idx = range(n_slices)
-	#print len(uids),len(slice_idx)
+	logging.info("%i %i", len(uids),len(slice_idx))
 	keyimg_keyseg = map(create_lmdb_keys, izip( uids, slice_idx))
 	keys_img, keys_seg = izip(*keyimg_keyseg)
 	return volume, segmentation, keys_img, keys_seg
@@ -414,44 +424,45 @@ def process_volume(uid, volume_file, seg_file):
 
 def persist_volumes(uid, imgvol, segvol, keys_img, keys_seg):
 	""" Writes slices of given volume into lmdb database. uid is just a unique id of the volume"""
-	ppool=Pool(N_PROC)
+	with closing(Pool(N_PROC)) as ppool:
+		dbsize = 1000*1024**3 # 1TB max size
+		def persist_volume(volume, keys, dbpath):
+			assert len(volume) == len(keys), "Number of keys and number of slices mismatch:"+str(volume.shape)+" , # keys: "+str(len(keys))
+			if len(volume) == 0:
+				return # Nothing to persist
 	
-	dbsize = 50*1024**3 # 50 GB max size
-	def persist_volume(volume, keys, dbpath):
-		assert volume.shape[0] == len(keys), "Number of keys and number of slices mismatch:"+str(volume.shape)+" , # keys: "+str(len(keys))
-
-		#print 'Persisting ', uid, 'to', dbpath
-		env = lmdb.open(dbpath, map_size=dbsize, sync=True) # returns environment
+			logging.info('Persisting %i to %s', uid, dbpath)
+			env = lmdb.open(dbpath, map_size=dbsize, sync=True) # returns environment
+			
+			batch_size = 500
+			start_ = 0
+			end_   = batch_size
+			while True:
+				txn = env.begin(write=True)
+				dbwriter = txn.cursor()
+				# Create small batch
+				mini_volume = volume[start_:end_]
+				mini_keys   = keys[start_:end_]
+				
+				if start_ >= volume.shape[0]:
+					break
+				logging.info('Serializing %i from %i to %i', uid, start_, end_)
+				datums = ppool.map(serialize, mini_volume)
+				logging.info('writing')
+				dbwriter.putmulti(izip(mini_keys, datums))
+				txn.commit()
+				
+				start_ += batch_size
+				end_   += batch_size
+				
+			env.close()
+			logging.info('Done committing volume uid %i to %s',uid, dbpath)
 		
-		batch_size = 500
-		start_ = 0
-		end_   = batch_size
-		while True:
-			txn = env.begin(write=True)
-			dbwriter = txn.cursor()
-			# Create small batch
-			mini_volume = volume[start_:end_]
-			mini_keys   = keys[start_:end_]
-			
-			if start_ >= volume.shape[0]:
-				break
-			#print 'Serializing',uid,' from',start_, 'to', end_
-			datums = ppool.map(serialize, mini_volume)
-			#print 'writing'
-			dbwriter.putmulti(izip(mini_keys, datums))
-			txn.commit()
-			
-			start_ += batch_size
-			end_   += batch_size
-			
-		env.close()
-		#print 'Done committing volume uid ',uid, 'to',dbpath
-	
-	persist_volume(segvol, keys_seg, segdb_path)
-	persist_volume(imgvol, keys_img, imgdb_path)
-	ppool.close()
+		persist_volume(segvol, keys_seg, segdb_path)
+		persist_volume(imgvol, keys_img, imgdb_path)
 	
 if __name__ == '__main__':
+	logging.basicConfig(level=config.log_level, format='%(asctime)s %(levelname)s:%(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
 	# Create parent directory
 	if not os.path.exists(config.lmdb_path):
 		os.makedirs(config.lmdb_path)
