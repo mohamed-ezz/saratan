@@ -244,7 +244,10 @@ def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
 def create_lmdb_keys(uid_sliceidx):
 	""" Creates lmdb keys for img and label slices """
 	uid, slice_idx = uid_sliceidx
-	random = np.random.random()*100000
+	if config.shuffle_slices==True:
+		random = np.random.random()*100000
+	else:
+		random = 0
 	key_seg = '%05i_%08d_%05d_seg' % (random, slice_idx, uid)
 	key_img = '%05i_%08d_%05d_img' % (random, slice_idx, uid)
 	return key_img, key_seg
@@ -363,7 +366,7 @@ def process_volume(uid, volume_file, seg_file):
 	Returns keys and values for both img and seg databases"""
 	
 	ppool=Pool(N_PROC)
-	print "Reading volume uid",uid
+	#print "Reading volume uid",uid
 	# LOAD NIFTIS
 	volume = nibabel.load(volume_file).get_data()
 	volume = np.rot90(volume)
@@ -373,29 +376,29 @@ def process_volume(uid, volume_file, seg_file):
 	segmentation = np.transpose(segmentation, (2,0,1))
 	assert volume.shape == segmentation.shape, "Volume and segmentation have different shapes: %s vs. %s" % (str(volume.shape),str(segmentation.shape))
 
-	print "Filtering volume uid",uid
+	#print "Filtering volume uid",uid
 	# FILTER RELEVANT SLICES
 	# Determine indices of relevant slices (in parallel)
-	print segmentation.shape
+	#print segmentation.shape
 	idx_relevant_slices = np.where(ppool.map(is_relevant_slice, segmentation))[0]
 	# Take only relevant slices
 	volume = volume[idx_relevant_slices]
 	segmentation = segmentation[idx_relevant_slices]
 
-	print "Process/Augment volume uid", uid
+	#print "Process/Augment volume uid", uid
 	# PROCESS SLICES
 	# Given list of (img,seg) tuples, returns list of (img volume, seg volume) tuples
 	# Each slice becomes a volume "due to augmentation"
 	list_of_imgsvol_segsvol= ppool.map(process_img_slice, izip(volume,segmentation))
 	ppool.close()
 	
-	print 'Zipping..'
+	#print 'Zipping..'
 	# now make it a tuple (list of img volumes, list of seg volumes)
 	imgvols, segvols = izip(*list_of_imgsvol_segsvol) #e.g., imvgols is a list of (17,388,388) arrays
 	# then make it one large img volume, and one large seg volume (volume having all original images and their augmentations)
 	# so the resulting volume's first dimension = original number of slices * augmentation factor
 	#for i in imgvols: print i.shape
-	print 'Concatenating...'
+	#print 'Concatenating...'
 	volume       = np.concatenate(imgvols, axis=0) # join all volumes into one big volume
 	segmentation = np.concatenate(segvols, axis=0)
 
@@ -406,7 +409,6 @@ def process_volume(uid, volume_file, seg_file):
 	#print len(uids),len(slice_idx)
 	keyimg_keyseg = map(create_lmdb_keys, izip( uids, slice_idx))
 	keys_img, keys_seg = izip(*keyimg_keyseg)
-	print volume.shape
 	return volume, segmentation, keys_img, keys_seg
 
 
@@ -418,7 +420,7 @@ def persist_volumes(uid, imgvol, segvol, keys_img, keys_seg):
 	def persist_volume(volume, keys, dbpath):
 		assert volume.shape[0] == len(keys), "Number of keys and number of slices mismatch:"+str(volume.shape)+" , # keys: "+str(len(keys))
 
-		print 'Persisting ', uid, 'to', dbpath
+		#print 'Persisting ', uid, 'to', dbpath
 		env = lmdb.open(dbpath, map_size=dbsize, sync=True) # returns environment
 		
 		batch_size = 500
@@ -433,9 +435,9 @@ def persist_volumes(uid, imgvol, segvol, keys_img, keys_seg):
 			
 			if start_ >= volume.shape[0]:
 				break
-			print 'Serializing',uid,' from',start_, 'to', end_
+			#print 'Serializing',uid,' from',start_, 'to', end_
 			datums = ppool.map(serialize, mini_volume)
-			print 'writing'
+			#print 'writing'
 			dbwriter.putmulti(izip(mini_keys, datums))
 			txn.commit()
 			
@@ -443,7 +445,7 @@ def persist_volumes(uid, imgvol, segvol, keys_img, keys_seg):
 			end_   += batch_size
 			
 		env.close()
-		print 'Done committing volume uid ',uid, 'to',dbpath
+		#print 'Done committing volume uid ',uid, 'to',dbpath
 	
 	persist_volume(segvol, keys_seg, segdb_path)
 	persist_volume(imgvol, keys_img, imgdb_path)
@@ -467,7 +469,7 @@ if __name__ == '__main__':
 	dataset = config.dataset if config.max_volumes < 0 else config.dataset[:config.max_volumes]
 	
 	p = None
-	for uid, volume_file, seg_file in dataset:
+	for uid, volume_file, seg_file in tqdm(dataset):
 		imgvol, segvol, keys_img, keys_seg = process_volume(uid, volume_file, seg_file)
 		# Wait for previous persist_volumes process
 		if p is not None:

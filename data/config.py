@@ -18,8 +18,11 @@ slice_shape = (400,400)
 #  - processors.plain_UNET_processor
 #  - processors.histeq_processor
 import create_ctdata as processors
-processors_list = []
+processors_list = [processors.plain_UNET_processor]
 
+# Shuffle slices and their augmentations globally across the database
+# You might want to set to False if dataset = test_set
+shuffle_slices = True
 
 # Augmentation factor 
 augmentation_factor = 17
