@@ -353,7 +353,8 @@ def process_img_slice(img_seg):
 		for processor in config.processors_list:
 			imgs[i], segs[i] = processor(imgs[i], segs[i])
 	
-	return imgs, segs
+	# returns 2-tuple, each is a list of np arrays
+	return np.array(imgs), np.array(segs)
 
 def serialize(arr):
 	arr = arr.reshape(1, arr.shape[0], arr.shape[1]) # add channel dimension
@@ -400,66 +401,88 @@ def process_volume(uid, volume_file, seg_file):
 		list_of_imgsvol_segsvol= ppool.map(process_img_slice, izip(volume,segmentation))
 		
 	logging.info(segmentation.shape)
-	logging.info(volume.shape)
 	logging.info('Zipping uid %i',uid)
-	logging.info("Len if list_imgsvol_segsvol %i", len(list_of_imgsvol_segsvol))
-	# now make it a tuple (list of img volumes, list of seg volumes)
+	# now make it a tuple (list of img volumes, list of seg volumes) and unpack it
 	imgvols, segvols = izip(*list_of_imgsvol_segsvol) #e.g., imvgols is a list of (17,388,388) arrays
+
+	
 	# then make it one large img volume, and one large seg volume (volume having all original images and their augmentations)
 	# so the resulting volume's first dimension = original number of slices * augmentation factor
 	#for i in imgvols: print i.shape
-	logging.info('Concatenating uid %i',uid)
-	volume       = np.concatenate(imgvols, axis=0) # join all volumes into one big volume
-	segmentation = np.concatenate(segvols, axis=0)
-
+	#logging.info('Concatenating uid %i',uid)
+	#volume       = np.concatenate(imgvols, axis=0) # join all volumes into one big volume
+	#segmentation = np.concatenate(segvols, axis=0)
+	
+	
 	# CREATE LMDB KEYS FOR ALL SLICES IN IMG AND SEG
-	n_slices = volume.shape[0]
+	n_slices = np.sum([ vol.shape[0] for vol in segvols])
 	uids=[uid]*n_slices
 	slice_idx = range(n_slices)
 	logging.info("%i %i", len(uids),len(slice_idx))
 	keyimg_keyseg = map(create_lmdb_keys, izip( uids, slice_idx))
 	keys_img, keys_seg = izip(*keyimg_keyseg)
-	return volume, segmentation, keys_img, keys_seg
+	return imgvols, segvols, keys_img, keys_seg
 
 
-def persist_volumes(uid, imgvol, segvol, keys_img, keys_seg):
-	""" Writes slices of given volume into lmdb database. uid is just a unique id of the volume"""
+def persist_volumes(uid, imgvols, segvols, keys_img, keys_seg):
+	""" Writes slices of given volume into lmdb database. uid is just a unique id of the volume
+	:param imgvols : list of volumes (each volume is actually an image+its augmentations)
+	:param segvols : Same structure for corresponding segmentation"""
+	
 	with closing(Pool(N_PROC)) as ppool:
 		dbsize = 1000*1024**3 # 1TB max size
-		def persist_volume(volume, keys, dbpath):
-			assert len(volume) == len(keys), "Number of keys and number of slices mismatch:"+str(volume.shape)+" , # keys: "+str(len(keys))
-			if len(volume) == 0:
+		def persist_volume(volumes, keys, dbpath):
+			""" This function will write the given volumes in batches. Each batch is a concatenation of multiple volumes 
+			:param imgvols : list of volumes (each volume is actually an image+its augmentations)"""
+			
+			
+			n_slices = np.sum([vol.shape[0] for vol in volumes]) # total n slices
+			assert n_slices == len(keys), "Total number of keys and number of slices mismatch:"+str(n_slices)+" , # keys: "+str(len(keys))
+			if n_slices == 0:
 				return # Nothing to persist
 	
 			logging.info('Persisting %i to %s', uid, dbpath)
 			env = lmdb.open(dbpath, map_size=dbsize, sync=True) # returns environment
 			
+			slices_per_volume = volumes[0].shape[0]
 			batch_size = 500
+			n_volumes_per_batch = int(batch_size / slices_per_volume)
+			
 			start_ = 0
-			end_   = batch_size
+			end_   = n_volumes_per_batch
+			next_key_idx = 0 #idx next key that should be used
 			while True:
+				if start_ >= len(volumes):
+					break
+				
+				# Create small batch
+				# join multiple volumes into one big volume
+				
+				volumes_batch = np.concatenate(volumes[start_:end_], axis=0)
+				
+				keys_batch   = keys[next_key_idx: next_key_idx+volumes_batch.shape[0]]
+				next_key_idx += volumes_batch.shape[0]
+				
+				assert len(volumes_batch) == len(keys_batch), "Length mismatch : batch_keys and batch_volumes (%i vs %i)" % (len(keys_batch),len(volumes_batch))
+				
+				logging.info('Serializing %i from %i to %i', uid, start_, end_)
+				datums = ppool.map(serialize, volumes_batch)
+
+				logging.info('writing')
 				txn = env.begin(write=True)
 				dbwriter = txn.cursor()
-				# Create small batch
-				mini_volume = volume[start_:end_]
-				mini_keys   = keys[start_:end_]
-				
-				if start_ >= volume.shape[0]:
-					break
-				logging.info('Serializing %i from %i to %i', uid, start_, end_)
-				datums = ppool.map(serialize, mini_volume)
-				logging.info('writing')
-				dbwriter.putmulti(izip(mini_keys, datums))
+				dbwriter.putmulti(izip(keys_batch, datums))
 				txn.commit()
 				
-				start_ += batch_size
-				end_   += batch_size
+				start_ += n_volumes_per_batch
+				end_   += n_volumes_per_batch
 				
 			env.close()
 			logging.info('Done committing volume uid %i to %s',uid, dbpath)
 		
-		persist_volume(segvol, keys_seg, segdb_path)
-		persist_volume(imgvol, keys_img, imgdb_path)
+		
+		persist_volume(segvols, keys_seg, segdb_path)
+		persist_volume(imgvols, keys_img, imgdb_path)
 	
 if __name__ == '__main__':
 	logging.basicConfig(level=config.log_level, format='%(asctime)s %(levelname)s:%(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
@@ -481,11 +504,11 @@ if __name__ == '__main__':
 	
 	p = None
 	for uid, volume_file, seg_file in tqdm(dataset):
-		imgvol, segvol, keys_img, keys_seg = process_volume(uid, volume_file, seg_file)
+		imgvols, segvols, keys_img, keys_seg = process_volume(uid, volume_file, seg_file)
 		# Wait for previous persist_volumes process
 		if p is not None:
 			p.join()
-		p = Process(target=persist_volumes, args=(uid, imgvol, segvol, keys_img, keys_seg))
+		p = Process(target=persist_volumes, args=(uid, imgvols, segvols, keys_img, keys_seg))
 		p.start()
 			
 	print "All Done.."
