@@ -6,7 +6,8 @@ log_level = logging.WARNING
 N_PROC = 14
 
 # Path of created database
-lmdb_path = "/data/lmdb/pa"
+# This can be a list with multiple paths, but also dataset should be a list of same size
+lmdb_path = ["/media/hdd-data/ID1-FCN-400-liverlesion/train/","/media/hdd-data/ID1-FCN-400-liverlesion/validate/"]
 # Database type : lmdb or leveldb
 backend = "lmdb" 
 # Takes only the first n volumes. Useful to create small datasets fast
@@ -90,6 +91,7 @@ validation_set = [\
 
 
 train_set = [\
+(91,BASE_PATH+"/CRF_141/2008-01-04/Sensation_16/segmented/20500001.nii",BASE_PATH+"/CRF_141/2008-01-04/Sensation_16/segmented/20500001_liv_0_clipped.nii"),
 (9,BASE_PATH+"/CRF_045/2008-12-17/LightSpeed16/segmented/04890001.nii",BASE_PATH+"/CRF_045/2008-12-17/LightSpeed16/segmented/04890001_liv_13_clipped.nii"),
 (7,BASE_PATH+"/CRF_041/2009-06-17/BrightSpeed_S/segmented/04070001.nii",BASE_PATH+"/CRF_041/2009-06-17/BrightSpeed_S/segmented/04070001_liv_1_clipped.nii"),
 (57,BASE_PATH+"/CRF_841/2013-08-06/SOMATOM_Definition_AS/segmented/199174.nii",BASE_PATH+"/CRF_841/2013-08-06/SOMATOM_Definition_AS/segmented/199174_liv_x_clipped.nii"),
@@ -111,7 +113,6 @@ train_set = [\
 (67,BASE_PATH+"/CRF_490/2010-11-19/iCT_256/segmented/63750001.nii",BASE_PATH+"/CRF_490/2010-11-19/iCT_256/segmented/63750001_liv_x_clipped.nii"),
 (85,BASE_PATH+"/CRF_335/2012-01-23/Brilliance_10/segmented/3580455.nii",BASE_PATH+"/CRF_335/2012-01-23/Brilliance_10/segmented/3580455_liv_x_clipped.nii"),
 (73,BASE_PATH+"/CRF_381/2012-05-10/LightSpeed_Pro_32/segmented/3617077.nii",BASE_PATH+"/CRF_381/2012-05-10/LightSpeed_Pro_32/segmented/3617077_liv_x_clipped.nii"),
-(91,BASE_PATH+"/CRF_141/2008-01-04/Sensation_16/segmented/20500001.nii",BASE_PATH+"/CRF_141/2008-01-04/Sensation_16/segmented/20500001_liv_0_clipped.nii"),
 (11,BASE_PATH+"/CRF_050/2007-05-11/Volume_Zoom/segmented/05680001.nii",BASE_PATH+"/CRF_050/2007-05-11/Volume_Zoom/segmented/05680001_liv_7_clipped.nii"),
 (27,BASE_PATH+"/CRF_174/2013-01-25/LightSpeed_Pro_32/segmented/3849007.nii",BASE_PATH+"/CRF_174/2013-01-25/LightSpeed_Pro_32/segmented/3849007_liv_x_clipped.nii"),
 (52,BASE_PATH+"/CRF_841/2012-05-03/SOMATOM_Definition_AS/segmented/204134.nii",BASE_PATH+"/CRF_841/2012-05-03/SOMATOM_Definition_AS/segmented/204134_liv_x_clipped.nii"),
@@ -149,5 +150,5 @@ train_set = [\
 
 
 # Select dataset
-dataset = train_set
+dataset = [train_set,validation_set]
 

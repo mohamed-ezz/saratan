@@ -487,30 +487,34 @@ def persist_volumes(uid, imgvols, segvols, keys_img, keys_seg):
 if __name__ == '__main__':
 	logging.basicConfig(level=config.log_level, format='%(asctime)s %(levelname)s:%(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
 	# Create parent directory
-	if not os.path.exists(config.lmdb_path):
-		os.makedirs(config.lmdb_path)
-	imgdb_path = os.path.join(config.lmdb_path,"img")
-	segdb_path = os.path.join(config.lmdb_path,"seg")
-	assert not os.path.exists(imgdb_path), "Image Database path exists :"+ imgdb_path
-	assert not os.path.exists(segdb_path), "Seg Database path exists :"+ segdb_path
-	# Copy config file as metadata with the generated dbs
-	config_path = os.path.join(os.path.dirname(__file__),"config.py")
-	shutil.copy(config_path, config.lmdb_path)
-	copied_path = os.path.join(config.lmdb_path, "config.py")
-	os.chmod(copied_path, 292) #chmod 444
 	
-	
-	dataset = config.dataset if config.max_volumes < 0 else config.dataset[:config.max_volumes]
-	
-	p = None
-	for uid, volume_file, seg_file in tqdm(dataset):
-		imgvols, segvols, keys_img, keys_seg = process_volume(uid, volume_file, seg_file)
-		# Wait for previous persist_volumes process
-		if p is not None:
-			p.join()
-		p = Process(target=persist_volumes, args=(uid, imgvols, segvols, keys_img, keys_seg))
-		p.start()
-			
+	assert len(config.dataset)==len(config.lmdb_path), "Number of lmdb paths must be equal number of datasets (%i vs %i)" %(len(config.dataset),len(config.lmdb_path))
+	for i,dataset in enumerate(config.dataset):
+		dataset = dataset if config.max_volumes < 0 else dataset[:config.max_volumes]
+		lmdb_path = config.lmdb_path[i]
+		
+		if not os.path.exists(lmdb_path):
+			os.makedirs(lmdb_path)
+		imgdb_path = os.path.join(lmdb_path,"img")
+		segdb_path = os.path.join(lmdb_path,"seg")
+		assert not os.path.exists(imgdb_path), "Image Database path exists :"+ imgdb_path
+		assert not os.path.exists(segdb_path), "Seg Database path exists :"+ segdb_path
+		# Copy config file as metadata with the generated dbs
+		config_path = os.path.join(os.path.dirname(__file__),"config.py")
+		shutil.copy(config_path, lmdb_path)
+		copied_path = os.path.join(lmdb_path, "config.py")
+		os.chmod(copied_path, 292) #chmod 444
+		
+		p = None
+		for uid, volume_file, seg_file in tqdm(dataset):
+			imgvols, segvols, keys_img, keys_seg = process_volume(uid, volume_file, seg_file)
+			# Wait for previous persist_volumes process
+			if p is not None:
+				p.join()
+			p = Process(target=persist_volumes, args=(uid, imgvols, segvols, keys_img, keys_seg))
+			p.start()
+		
+		p.join()
 	print "All Done.."
 
 
