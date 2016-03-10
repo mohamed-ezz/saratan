@@ -140,53 +140,53 @@ def augment(img, seg, factor=None):
 	for selector in xrange(factor+1):
 		if selector < 2:
 			continue
-		elif selector == 2:# mirror x
-			img_, seg_ = np.fliplr(img), np.fliplr(seg)
-			imgs.append(img_);segs.append(seg_)
-		elif selector == 3:# mirror y
-			img_, seg_ = np.flipud(img), np.flipud(seg)
-			imgs.append(img_);segs.append(seg_)
-		elif selector == 4:# turn 90
-			img_, seg_ = np.rot90(img, 1), np.rot90(seg, 1)
-			imgs.append(img_);segs.append(seg_)
-		elif selector == 5:# turn 180
-			img_, seg_ = np.rot90(img, 2), np.rot90(seg, 2)
-			imgs.append(img_);segs.append(seg_)
-		elif selector == 6:# turn 270
-			img_, seg_ = np.rot90(img, 3), np.rot90(seg, 3)
-			imgs.append(img_);segs.append(seg_)
-		elif selector == 7:# noise
+		elif selector == 2:# noise
 			img_noisy = (img + 0.7 * img.std() * np.random.random(img.shape)).astype(IMG_DTYPE)
 			img_, seg_ = img_noisy, seg
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 8:# crop lb
+		elif selector == 3:# crop lb
 			img_, seg_ = crop(img, seg, 'lb')
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 9:# crop rt
+		elif selector == 4:# crop rt
 			img_, seg_ = crop(img, seg, 'rt')
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 10:# crop c
+		elif selector == 5:# crop c
 			img_, seg_ = crop(img, seg, 'c')
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 11:# random rotation by [-10, 10] degrees
+		elif selector == 6:# random rotation by [-10, 10] degrees
 			rand = random.randrange(-10,10)
 			img_, seg_ = rotate(img, rand), rotate(seg, rand) 
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 12:# random rotation by [-10, 10] degrees
+		elif selector == 7:# random rotation by [-10, 10] degrees
 			rand = random.randrange(-10,10)
 			img_, seg_ = rotate(img, rand), rotate(seg, rand) 
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 13:# shift down
+		elif selector == 8:# shift down
 			img_, seg_ = get_shift(img, seg, 0, -int(height/15))
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 14:# shift up
+		elif selector == 9:# shift up
 			img_, seg_ = get_shift(img, seg, 0, int(height/15))
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 15:# shift right
+		elif selector == 10:# shift right
 			img_, seg_ = get_shift(img, seg, int(width/15), 0)
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 16:# shift left
+		elif selector == 11:# shift left
 			img_, seg_ = get_shift(img, seg, -int(width/15), 0)
+			imgs.append(img_);segs.append(seg_)
+		elif selector == 12:# mirror x
+			img_, seg_ = np.fliplr(img), np.fliplr(seg)
+			imgs.append(img_);segs.append(seg_)
+		elif selector == 13:# mirror y
+			img_, seg_ = np.flipud(img), np.flipud(seg)
+			imgs.append(img_);segs.append(seg_)
+		elif selector == 14:# turn 90
+			img_, seg_ = np.rot90(img, 1), np.rot90(seg, 1)
+			imgs.append(img_);segs.append(seg_)
+		elif selector == 15:# turn 180
+			img_, seg_ = np.rot90(img, 2), np.rot90(seg, 2)
+			imgs.append(img_);segs.append(seg_)
+		elif selector == 16:# turn 270
+			img_, seg_ = np.rot90(img, 3), np.rot90(seg, 3)
 			imgs.append(img_);segs.append(seg_)
 		elif selector == 17:# shift right up
 			img_, seg_ = get_shift(img, seg, int(width/15), int(height/15))
@@ -290,6 +290,11 @@ def plain_UNET_processor(img,seg):
 	img=np.pad(img,92,mode='reflect')
 	return img, seg
 
+def liveronly_label_processor(img, seg):
+	"""Converts lesion labels to liver label. The resulting classifier classifies liver vs. background."""
+	seg[seg==2]=1
+	return img,seg
+	
 def zoomliver_UNET_processor(img, seg):
 	""" Custom preprocessing of img,seg for UNET architecture:
 	Crops the background and upsamples the found patch."""
@@ -490,8 +495,10 @@ if __name__ == '__main__':
 	
 	assert len(config.dataset)==len(config.lmdb_path), "Number of lmdb paths must be equal number of datasets (%i vs %i)" %(len(config.dataset),len(config.lmdb_path))
 	for i,dataset in enumerate(config.dataset):
+		
 		dataset = dataset if config.max_volumes < 0 else dataset[:config.max_volumes]
 		lmdb_path = config.lmdb_path[i]
+		print '\n Creating database at : ', lmdb_path
 		
 		if not os.path.exists(lmdb_path):
 			os.makedirs(lmdb_path)

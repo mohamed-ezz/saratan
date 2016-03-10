@@ -82,7 +82,9 @@ for i, volume_dirname in enumerate(natsort.natsorted(os.listdir(DATA_PATH))):
         if not os.path.isdir(organ_path):
             continue
         
-        if organ.startswith("livertumor") or re.match("liver.yst.*", organ):
+        organ = organ.lower()
+        
+        if organ.startswith("livertumor") or re.match("liver.yst.*", organ) or organ.startswith("stone") or organ.startswith("metastasecto") :
             print '\tOrgan',mask_dirname,organ
             current_tumor = read_dicom_series(organ_path)
             current_tumor = np.clip(current_tumor,0,1)

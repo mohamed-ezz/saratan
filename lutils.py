@@ -3,7 +3,7 @@ Contains common functions for reading data out of leveldb
 
 @author: Mohamed.Ezz
 '''
-import plyvel
+import plyvel, lmdb
 import numpy as np
 from caffe.proto import caffe_pb2
 
@@ -17,14 +17,14 @@ def denormalize_img_255(arr):
 
 def leveldb_arrays(leveldbdir):
 	""" Generator. Given leveldb directory, iterate the stored data as numpy arrays. Yields (Key, NumpyArray) """
-	db = plyvel.DB(leveldbdir)
+	db = CaffeDatabase(leveldbdir)
 	for k,v in db.iterator():
 		yield k, to_numpy_matrix(v)
 
-def nth_datum(leveldb, n):
+def nth_datum(caffedb, n):
 	""" Returns nth datum. 0-based index"""
 	n+=1
-	it = leveldb.iterator()
+	it = caffedb.iterator()
 	for _ in range(n):
 		_, v = it.next()
 	datum = caffe_pb2.Datum()
@@ -42,13 +42,13 @@ def get_data_type(datum):
 	type_ = types[int(int_size)]
 	return type_
 
-def find_keycount(leveldb, count_values=None):
-	""" Takes a plyvel.DB instance and returns number of keys found and count of each value. 
+def find_keycount(caffedb, count_values=None):
+	""" Takes a CaffeDatabase or plyvel.DB instance and returns number of keys found and count of each value. 
 	count_values is a list of values to count, e.g. count_values=[0,1,2] will return [count of 1s, count of 2s, count of 3s]
 	if count_values is None, return value of this function is [],key_count"""
 	count = 0
 	total_value_counts = np.array([0]*len(count_values or []))
-	for _,v in leveldb.iterator():
+	for _,v in caffedb.iterator():
 		count += 1
 		
 		if count_values is not None:
@@ -61,7 +61,7 @@ def find_keycount(leveldb, count_values=None):
 	return total_value_counts, count
 
 def to_numpy_matrix(v):
-	""" Convert leveldb value to numpy matrix of shape N x N """
+	""" Convert leveldb/lmdb value to numpy matrix of shape N x N """
 	datum = caffe_pb2.Datum()
 	datum.ParseFromString(v)
 	# Three cases
@@ -78,3 +78,29 @@ def to_numpy_matrix(v):
 	
 	matrix = matrix.reshape((datum.height, datum.width))
 	return matrix
+
+
+
+class CaffeDatabase():
+	""" Abstraction layer over lmdb and leveldb """
+	def __init__(self, path, backend='lmdb'):
+		self.backend = backend
+		assert backend in ['lmdb','leveldb'], "Database backend not known :%s"%backend
+		
+		if backend=='lmdb':
+			self.db = lmdb.open(path)
+		elif backend=='leveldb':
+			self.db = plyvel.DB(path)
+			
+	def iterator(self):
+		if self.backend == 'lmdb':
+			txn = self.db.begin()
+			cursor = txn.cursor()
+			it = cursor.iterator()
+		elif self.backend == 'leveldb':
+			it = self.db.iterator()
+		return it
+		
+		
+		
+		

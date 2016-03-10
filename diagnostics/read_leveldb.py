@@ -8,10 +8,11 @@ The given leveldb is assumed to be created using the prep_caffe_ds.py script.
 
 '''
 import sys, os
+from lutils import CaffeDatabase
 projdir =os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(projdir)
 
-import plyvel
+import plyvel, lmdb
 import argparse
 import numpy as np
 from caffe.proto import caffe_pb2
@@ -51,16 +52,18 @@ def find_pixel_range(leveldb, n_slices=100):
 	
 parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,description="Reads leveldb and prints some stats")
 parser.add_argument("-db", required=True)
+parser.add_argument("-n", default = 10, type=int, help="Number of slices to involve in calculations. Default=10")
 parser.add_argument("-hist", default=None, nargs='+', type=int, help="list of values to count number of occurences for. e.g. -hist 0 1 2")
+parser.add_argument("-backend",default='lmdb')
 args = parser.parse_args()
 
 # Open database
 try:
-	db=plyvel.DB(args.db, create_if_missing=False)
+	db=CaffeDatabase(args.db, args.backend)
 except:
 	newpath = os.path.join(args.db,"train_img")
 	print 'Path have no leveldb, trying %s' % newpath
-	db=plyvel.DB(newpath, create_if_missing=False)
+	db=CaffeDatabase(args.db, args.backend)
 	
 print "Image dimension : ", find_image_dimension(db)
 print "Pixel range     : ", find_pixel_range(db)
