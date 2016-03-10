@@ -7,14 +7,17 @@ N_PROC = 14
 
 # Path of created database
 # This can be a list with multiple paths, but also dataset should be a list of same size
-lmdb_path = ["/media/hdd-data/ID1-FCN-400-liverlesion/train/","/media/hdd-data/ID1-FCN-400-liverlesion/validate/"]
+lmdb_path = ["/mnt/ID2-UNET-572-liverlesion/fold1/train", "/mnt/ID2-UNET-572-liverlesion/fold1/test",\
+			"/mnt/ID2-UNET-572-liverlesion/fold2/train", "/mnt/ID2-UNET-572-liverlesion/fold2/test",\
+			"/mnt2/ID2-UNET-572-liverlesion/fold3/train", "/mnt2/ID2-UNET-572-liverlesion/fold3/test",\
+			"/mnt2/ID2-UNET-572-liverlesion/fold4/train", "/mnt2/ID2-UNET-572-liverlesion/fold4/test"]
 # Database type : lmdb or leveldb
 backend = "lmdb" 
 # Takes only the first n volumes. Useful to create small datasets fast
 max_volumes = -1
 
 # Image/Seg shape
-slice_shape = (400,400)
+slice_shape = (388,388)
 # Pre-write processing
 # Processors applied to images/segmentations right before persisting them to database (after augmentation...etc)
 # A processor takes 2 images img and seg, and returns a tuple (img,seg)
@@ -39,7 +42,7 @@ augmentation_factor = 17
 # liver-only:   Include only slices which are labeld with liver or lower (1 or 0)
 # lesion-only:  Include only slices which are labeled with lesion or lower (2, 1 or 0)
 # liver-lesion: Include only slices which are labeled with liver or lesion (slices with max=2 or with max=1)
-select_slices = "lesion-only"
+select_slices = "liver-lesion"
 
 # Base path of niftis and segmentation niftis
 BASE_PATH = "/media/nas/niftis_segmented"
@@ -149,6 +152,51 @@ train_set = [\
 
 
 
+
+
+###########################
+##### 3DIRCA DATASET ######
+###########################
+IRCA_BASE_PATH = '/data/niftis_segmented/'
+irca_all= [\
+(301,IRCA_BASE_PATH+"image01.nii",IRCA_BASE_PATH+"label01.nii"),
+(302,IRCA_BASE_PATH+"image02.nii",IRCA_BASE_PATH+"label02.nii"),
+(303,IRCA_BASE_PATH+"image03.nii",IRCA_BASE_PATH+"label03.nii"),
+(304,IRCA_BASE_PATH+"image04.nii",IRCA_BASE_PATH+"label04.nii"),
+(305,IRCA_BASE_PATH+"image05.nii",IRCA_BASE_PATH+"label05.nii"),
+(306,IRCA_BASE_PATH+"image06.nii",IRCA_BASE_PATH+"label06.nii"),
+(307,IRCA_BASE_PATH+"image07.nii",IRCA_BASE_PATH+"label07.nii"),
+(308,IRCA_BASE_PATH+"image08.nii",IRCA_BASE_PATH+"label08.nii"),
+(309,IRCA_BASE_PATH+"image09.nii",IRCA_BASE_PATH+"label09.nii"),
+(310,IRCA_BASE_PATH+"image10.nii",IRCA_BASE_PATH+"label10.nii"),
+(311,IRCA_BASE_PATH+"image11.nii",IRCA_BASE_PATH+"label11.nii"),
+(312,IRCA_BASE_PATH+"image12.nii",IRCA_BASE_PATH+"label12.nii"),
+(313,IRCA_BASE_PATH+"image13.nii",IRCA_BASE_PATH+"label13.nii"),
+(314,IRCA_BASE_PATH+"image14.nii",IRCA_BASE_PATH+"label14.nii"),
+(315,IRCA_BASE_PATH+"image15.nii",IRCA_BASE_PATH+"label15.nii"),
+(316,IRCA_BASE_PATH+"image16.nii",IRCA_BASE_PATH+"label16.nii"),
+(317,IRCA_BASE_PATH+"image17.nii",IRCA_BASE_PATH+"label17.nii"),
+(318,IRCA_BASE_PATH+"image18.nii",IRCA_BASE_PATH+"label18.nii"),
+(319,IRCA_BASE_PATH+"image19.nii",IRCA_BASE_PATH+"label19.nii"),
+(320,IRCA_BASE_PATH+"image20.nii",IRCA_BASE_PATH+"label20.nii")]
+
+irca_test_fold1 = irca_all[:5]
+irca_train_fold1 = irca_all[5:]
+
+irca_test_fold2 = irca_all[5:10]
+irca_train_fold2 = irca_all[:5] + irca_all[10:]
+
+irca_test_fold3 = irca_all[10:15]
+irca_train_fold3 = irca_all[:10] + irca_all[15:]
+
+irca_test_fold4 = irca_all[15:]
+irca_train_fold4 = irca_all[:15]
+
+
+
 # Select dataset
-dataset = [train_set,validation_set]
+dataset = [irca_train_fold1, irca_test_fold1,\
+		irca_train_fold2, irca_test_fold2,\
+		irca_train_fold3, irca_test_fold3,\
+		irca_train_fold4, irca_test_fold4]
 
