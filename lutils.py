@@ -96,7 +96,7 @@ class CaffeDatabase():
 		if self.backend == 'lmdb':
 			txn = self.db.begin()
 			cursor = txn.cursor()
-			it = cursor.iterator()
+			it = cursor.iternext()
 		elif self.backend == 'leveldb':
 			it = self.db.iterator()
 		return it

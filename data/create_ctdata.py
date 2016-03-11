@@ -312,8 +312,8 @@ def zoomliver_UNET_processor(img, seg):
 	y1, y2 = nonzero_rowmaxes[0], nonzero_rowmaxes[-1]
 	width = x2-x1
 	height= y2-y1
-	MIN_WIDTH = 60
-	MIN_HEIGHT= 60
+	MIN_WIDTH = 150
+	MIN_HEIGHT= 150
 	x_pad = (MIN_WIDTH - width) / 2.0 if width < MIN_WIDTH else 0
 	y_pad = (MIN_HEIGHT - height)/2.0 if height < MIN_HEIGHT else 0
 	
@@ -362,6 +362,7 @@ def process_img_slice(img_seg):
 	return np.array(imgs), np.array(segs)
 
 def serialize(arr):
+	""" Takes a 2D image or label, puts it into a datum and return the serialized datum""" 
 	arr = arr.reshape(1, arr.shape[0], arr.shape[1]) # add channel dimension
 	datum_serialized = caffe.io.array_to_datum(arr).SerializeToString()
 	return datum_serialized
