@@ -2,7 +2,7 @@
 
 import sys, os, time, random, shutil
 import numpy as np
-import lmdb, caffe, nibabel 
+import lmdb, caffe, nibabel
 import config
 from multiprocessing import Pool, Process
 import scipy.misc, scipy.ndimage.interpolation
@@ -502,23 +502,20 @@ def persist_volumes(uid, imgvols, segvols, keys_img, keys_seg):
 def apply_deformation(img,seg,DEFORMATION_FAC=0.1):
 	rows, cols = img.shape[0], img.shape[1]
 	# Build Mesh
-	src_cols,src_cols_steps = np.linspace(0, cols, 20,retstep=True)
-	src_rows,src_rows_steps = np.linspace(0, rows, 20,retstep=True)
+	src_cols,src_cols_steps = np.linspace(0, cols, 3,retstep=True)
+	src_rows,src_rows_steps = np.linspace(0, rows, 3,retstep=True)
 	src_rows, src_cols = np.meshgrid(src_rows, src_cols)
-
 	src = np.dstack([src_cols.flat, src_rows.flat])[0]
-
 	# add random noise deformation
 	dst_rows = src[:, 1] + DEFORMATION_FAC * src_rows_steps * np.random.random(src[:, 1].shape)
 	dst_cols = src[:, 0] + DEFORMATION_FAC * src_cols_steps * np.random.random(src[:, 0].shape)
 	dst = np.vstack([dst_cols, dst_rows]).T
-
 	# calc transformation
 	tform = PiecewiseAffineTransform()
 	tform.estimate(src, dst)
 	# wrap according to transformation
-	img_ = warp(img, tform, output_shape=(rows, cols))
-	seg_ = np.rint(warp(seg, tform, output_shape=(rows, cols)))
+	img_ = warp(img, tform,  order=0,mode='reflect',preserve_range=1)
+	seg_ = warp(seg, tform,  order=0,mode='reflect',preserve_range=1)
 	return img_,seg_
 
 if __name__ == '__main__':
