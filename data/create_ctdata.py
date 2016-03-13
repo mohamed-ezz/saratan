@@ -2,7 +2,7 @@
 
 import sys, os, time, random, shutil
 import numpy as np
-import lmdb, caffe, nibabel 
+import lmdb, caffe, nibabel
 import config
 from multiprocessing import Pool, Process
 import scipy.misc, scipy.ndimage.interpolation
@@ -12,9 +12,15 @@ from itertools import izip
 import logging
 from contextlib import closing
 
+## Deformation Augmentation
+from skimage.transform import PiecewiseAffineTransform, warp
+
+
 N_PROC = config.N_PROC
 IMG_DTYPE = np.float
 SEG_DTYPE = np.uint8
+# Deformation Augmentation factors, defines to which factor a mesh point should move according to the mesh size step
+DEFORMATION_FAC=0.1
 
 
 
@@ -173,40 +179,43 @@ def augment(img, seg, factor=None):
 		elif selector == 11:# shift left
 			img_, seg_ = get_shift(img, seg, -int(width/15), 0)
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 12:# mirror x
+		elif selector == 12:# deformation
+			img_,seg_ = apply_deformation(img,seg,DEFORMATION_FAC)
+			imgs.append(img_);segs.append(seg_)
+		elif selector == 13:# mirror x
 			img_, seg_ = np.fliplr(img), np.fliplr(seg)
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 13:# mirror y
+		elif selector == 14:# mirror y
 			img_, seg_ = np.flipud(img), np.flipud(seg)
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 14:# turn 90
+		elif selector == 15:# turn 90
 			img_, seg_ = np.rot90(img, 1), np.rot90(seg, 1)
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 15:# turn 180
+		elif selector == 16:# turn 180
 			img_, seg_ = np.rot90(img, 2), np.rot90(seg, 2)
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 16:# turn 270
+		elif selector == 17:# turn 270
 			img_, seg_ = np.rot90(img, 3), np.rot90(seg, 3)
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 17:# shift right up
+		elif selector == 18:# shift right up
 			img_, seg_ = get_shift(img, seg, int(width/15), int(height/15))
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 18:# shift left down
+		elif selector == 19:# shift left down
 			img_, seg_ = get_shift(img, seg, -int(width/15), -int(height/15))
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 19:# shift left up
+		elif selector == 20:# shift left up
 			img_, seg_ = get_shift(img, seg, -int(width/15), int(height/15))
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 20:# shift right down
+		elif selector == 21:# shift right down
 			img_, seg_ = get_shift(img, seg, int(width/15), -int(height/15))
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 21:# crop lt
+		elif selector == 22:# crop lt
 			img_, seg_ = crop(img,seg, 'lt')
 			imgs.append(img_);segs.append(seg_)
-		elif selector == 22:# crop rb
+		elif selector == 23:# crop rb
 			img_, seg_ = crop(img,seg, 'rb')
 			imgs.append(img_);segs.append(seg_)
-		elif selector > 22 and selector <= 50:
+		elif selector > 24 and selector <= 50:
 			rand = random.randrange(-75,75)
 			img_, seg_ = rotate(img, rand), rotate(seg, rand) 
 			imgs.append(img_);segs.append(seg_)
@@ -489,7 +498,26 @@ def persist_volumes(uid, imgvols, segvols, keys_img, keys_seg):
 		
 		persist_volume(segvols, keys_seg, segdb_path)
 		persist_volume(imgvols, keys_img, imgdb_path)
-	
+
+def apply_deformation(img,seg,DEFORMATION_FAC=0.1):
+	rows, cols = img.shape[0], img.shape[1]
+	# Build Mesh
+	src_cols,src_cols_steps = np.linspace(0, cols, 3,retstep=True)
+	src_rows,src_rows_steps = np.linspace(0, rows, 3,retstep=True)
+	src_rows, src_cols = np.meshgrid(src_rows, src_cols)
+	src = np.dstack([src_cols.flat, src_rows.flat])[0]
+	# add random noise deformation
+	dst_rows = src[:, 1] + DEFORMATION_FAC * src_rows_steps * np.random.random(src[:, 1].shape)
+	dst_cols = src[:, 0] + DEFORMATION_FAC * src_cols_steps * np.random.random(src[:, 0].shape)
+	dst = np.vstack([dst_cols, dst_rows]).T
+	# calc transformation
+	tform = PiecewiseAffineTransform()
+	tform.estimate(src, dst)
+	# wrap according to transformation
+	img_ = warp(img, tform,  order=0,mode='reflect',preserve_range=1)
+	seg_ = warp(seg, tform,  order=0,mode='reflect',preserve_range=1)
+	return img_,seg_
+
 if __name__ == '__main__':
 	logging.basicConfig(level=config.log_level, format='%(asctime)s %(levelname)s:%(message)s', datefmt='%d-%m-%Y %I:%M:%S %p')
 	# Create parent directory
