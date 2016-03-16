@@ -1,6 +1,13 @@
 """
 This script process 3DIRCA dataset. The end result is some niftis with only liver and lesion labels  (e.g., label01.nii)
 Label values: 0,1,2 for bg,liver,lesion resp.
+
+Usage :
+cd into the directory of the IRCA dataset (usually folder named 3Dircadb1)
+then run the script :
+python /path/to/irca_to_nii.python
+
+
 """
 from matplotlib import pyplot as plt
 #%matplotlib inline
@@ -24,6 +31,9 @@ def flip_volume(input_filename, output_filename):
 
 def read_dicom_series(directory, filepattern = "image_*"):
     """ Reads a DICOM Series files in the given directory. Only filesnames matching filepattern will be considered"""
+    
+    if not os.path.exists(directory) or not os.path.isdir(directory):
+        raise ValueError("Given directory does not exist or is a file : "+str(directory))
     print '\t\t Read Dicom',directory
     lstFilesDCM = natsort.natsorted(glob.glob(os.path.join(directory, filepattern)))
     print '\t\t Length dicom series',len(lstFilesDCM)
@@ -43,9 +53,9 @@ def read_dicom_series(directory, filepattern = "image_*"):
 
     return ArrayDicom
 
-
+# Path to root folder of dataset : 3Dircadb1
 DATA_PATH = '.'
-# path that will contain the output 
+# path that will contain the output niftis
 OUTPUT_PATH = './niftis_segmented_all/'
 
 if not os.path.exists(OUTPUT_PATH):
@@ -53,7 +63,7 @@ if not os.path.exists(OUTPUT_PATH):
     
 liver_volumes = []
 tumor_volumes = []
-
+volume_ids = []
 #######################
 ##### READ DICOMS #####
 #######################
@@ -67,9 +77,11 @@ for i, volume_dirname in enumerate(natsort.natsorted(os.listdir(DATA_PATH))):
     if not os.path.isdir(volume_fulldirname) or not volume_dirname.startswith("3Dircadb1."):
         continue
     print 'Volume',volume_dirname
-    relevant_masks = 0
+    relevant_masks = 0 # number of relevant masks files found for this volume (liver or tumor)
     mask_dirname = os.path.join(volume_fulldirname,"MASKS_DICOM")
     volume_id = volume_dirname.replace("3Dircadb1.","") #id of volume ("1" to "20")
+    # Save the volume id
+    volume_ids.append(int(volume_id))
     image_filename = os.path.join(volume_fulldirname,"image"+volume_id+".nii")
     flip_volume(image_filename, os.path.join(OUTPUT_PATH, "image%.2d"%int(volume_id)+".nii"))
     
@@ -102,12 +114,34 @@ for i, volume_dirname in enumerate(natsort.natsorted(os.listdir(DATA_PATH))):
             liver_volume = read_dicom_series(organ_path)
             liver_volume = np.clip(liver_volume, 0, 1)
             relevant_masks+=1
+    
+    #########################
+    ##### Special Cases #####
+    #
+    #
+    if volume_dirname == "3Dircadb1.3":
+        print '\tHandling Special case for volume 3. Merging label 329 from LABELED_DICOM'
+        ### Volume 3. Need to merge a label from the LABELED_DICOM into tumors
+        label_dicom_path = os.path.join(volume_fulldirname, "LABELLED_DICOM") 
+        desired_label_value = 329
+        extra_mask = read_dicom_series(label_dicom_path) == 329
+        tumor_volume[extra_mask] = 1
+    #
+    #
+    #########################
         
     liver_volumes.append(liver_volume)
     tumor_volumes.append(tumor_volume)
     if relevant_masks < 2:
         print "For %s Only %i relevant mask(s) were found" % (volume_dirname,relevant_masks)
-        
+
+
+
+
+
+
+
+
 print ' WRITING NIFTIS TO DISK'
 #######################
 ##### WRITE NIFTI #####
@@ -115,7 +149,7 @@ print ' WRITING NIFTIS TO DISK'
 
 #final_volume = []
 for i in range(len(liver_volumes)):
-    liver, tumor = liver_volumes[i], tumor_volumes[i]
+    liver, tumor, volume_id = liver_volumes[i], tumor_volumes[i], volume_ids[i]
     # Map label values to 0 and 1 and merge all into liver volume
     liver_value = np.max(np.unique(liver))
     liver[liver==liver_value] = 1
@@ -130,7 +164,7 @@ for i in range(len(liver_volumes)):
     #final_volume.append(liver)
     # Write to disk
     nii=nibabel.Nifti1Image(np.rot90(liver, -1), affine=np.eye(4))
-    filename = os.path.join(OUTPUT_PATH, "label%.2d.nii" % (i+1))
+    filename = os.path.join(OUTPUT_PATH, "label%.2d.nii" % (volume_id))
     print 'Writing to file ',filename
     nii.to_filename(filename)
     

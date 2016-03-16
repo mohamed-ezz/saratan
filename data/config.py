@@ -3,14 +3,13 @@ import logging
 # Logging level
 log_level = logging.WARNING
 # Number of CPUs used for parallel processing
-N_PROC = 14
+N_PROC = 28
 
 # Path of created database
 # This can be a list with multiple paths, but also dataset should be a list of same size
-lmdb_path = ["/mnt/ID2-UNET-572-liverlesion/fold1/train", "/mnt/ID2-UNET-572-liverlesion/fold1/test",\
-			"/mnt/ID2-UNET-572-liverlesion/fold2/train", "/mnt/ID2-UNET-572-liverlesion/fold2/test",\
-			"/mnt2/ID2-UNET-572-liverlesion/fold3/train", "/mnt2/ID2-UNET-572-liverlesion/fold3/test",\
-			"/mnt2/ID2-UNET-572-liverlesion/fold4/train", "/mnt2/ID2-UNET-572-liverlesion/fold4/test"]
+lmdb_path = ["/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold1/train", "/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold1/test",\
+			"/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold2/train", "/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold2/test",\
+			"/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold3/train", "/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold3/test"]
 # Database type : lmdb or leveldb
 backend = "lmdb" 
 # Takes only the first n volumes. Useful to create small datasets fast
@@ -25,8 +24,9 @@ slice_shape = (388,388)
 #  - processors.zoomliver_UNET_processor
 #  - processors.plain_UNET_processor
 #  - processors.histeq_processor
+#  - processors.liveronly_label_processor
 import create_ctdata as processors
-processors_list = [processors.plain_UNET_processor]
+processors_list = [processors.liveronly_label_processor, processors.plain_UNET_processor]
 
 # Shuffle slices and their augmentations globally across the database
 # You might want to set to False if dataset = test_set
@@ -163,23 +163,26 @@ irca_all= [\
 (302,IRCA_BASE_PATH+"image02.nii",IRCA_BASE_PATH+"label02.nii"),
 (303,IRCA_BASE_PATH+"image03.nii",IRCA_BASE_PATH+"label03.nii"),
 (304,IRCA_BASE_PATH+"image04.nii",IRCA_BASE_PATH+"label04.nii"),
-(305,IRCA_BASE_PATH+"image05.nii",IRCA_BASE_PATH+"label05.nii"),
+#(305,IRCA_BASE_PATH+"image05.nii",IRCA_BASE_PATH+"label05.nii"),
 (306,IRCA_BASE_PATH+"image06.nii",IRCA_BASE_PATH+"label06.nii"),
-(307,IRCA_BASE_PATH+"image07.nii",IRCA_BASE_PATH+"label07.nii"),
+#(307,IRCA_BASE_PATH+"image07.nii",IRCA_BASE_PATH+"label07.nii"),
 (308,IRCA_BASE_PATH+"image08.nii",IRCA_BASE_PATH+"label08.nii"),
 (309,IRCA_BASE_PATH+"image09.nii",IRCA_BASE_PATH+"label09.nii"),
 (310,IRCA_BASE_PATH+"image10.nii",IRCA_BASE_PATH+"label10.nii"),
-(311,IRCA_BASE_PATH+"image11.nii",IRCA_BASE_PATH+"label11.nii"),
+#(311,IRCA_BASE_PATH+"image11.nii",IRCA_BASE_PATH+"label11.nii"),
 (312,IRCA_BASE_PATH+"image12.nii",IRCA_BASE_PATH+"label12.nii"),
 (313,IRCA_BASE_PATH+"image13.nii",IRCA_BASE_PATH+"label13.nii"),
-(314,IRCA_BASE_PATH+"image14.nii",IRCA_BASE_PATH+"label14.nii"),
+#(314,IRCA_BASE_PATH+"image14.nii",IRCA_BASE_PATH+"label14.nii"),
 (315,IRCA_BASE_PATH+"image15.nii",IRCA_BASE_PATH+"label15.nii"),
 (316,IRCA_BASE_PATH+"image16.nii",IRCA_BASE_PATH+"label16.nii"),
 (317,IRCA_BASE_PATH+"image17.nii",IRCA_BASE_PATH+"label17.nii"),
 (318,IRCA_BASE_PATH+"image18.nii",IRCA_BASE_PATH+"label18.nii"),
-(319,IRCA_BASE_PATH+"image19.nii",IRCA_BASE_PATH+"label19.nii"),
-(320,IRCA_BASE_PATH+"image20.nii",IRCA_BASE_PATH+"label20.nii")]
+(319,IRCA_BASE_PATH+"image19.nii",IRCA_BASE_PATH+"label19.nii")]
+#(320,IRCA_BASE_PATH+"image20.nii",IRCA_BASE_PATH+"label20.nii")]
 
+
+
+### 3 Fold
 irca_test_fold1 = irca_all[:5]
 irca_train_fold1 = irca_all[5:]
 
@@ -187,16 +190,24 @@ irca_test_fold2 = irca_all[5:10]
 irca_train_fold2 = irca_all[:5] + irca_all[10:]
 
 irca_test_fold3 = irca_all[10:15]
-irca_train_fold3 = irca_all[:10] + irca_all[15:]
+irca_train_fold3 = irca_all[:10]
 
-irca_test_fold4 = irca_all[15:]
-irca_train_fold4 = irca_all[:15]
+
+
+### 4 Fold
+# irca_test_fold1 = irca_all[:5]
+# irca_train_fold1 = irca_all[5:]
+# irca_test_fold2 = irca_all[5:10]
+# irca_train_fold2 = irca_all[:5] + irca_all[10:]
+# irca_test_fold3 = irca_all[10:15]
+# irca_train_fold3 = irca_all[:10] + irca_all[15:]
+# irca_test_fold4 = irca_all[15:]
+# irca_train_fold4 = irca_all[:15]
 
 
 
 # Select dataset
 dataset = [irca_train_fold1, irca_test_fold1,\
 		irca_train_fold2, irca_test_fold2,\
-		irca_train_fold3, irca_test_fold3,\
-		irca_train_fold4, irca_test_fold4]
+		irca_train_fold3, irca_test_fold3]
 
