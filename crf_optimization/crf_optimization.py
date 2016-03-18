@@ -60,7 +60,9 @@ def crf_worker(img,label,prob,crfsettings):
 	:return: lesion dice
 	"""
 	pro = CRFProcessor.CRF3DProcessor(**crfsettings)
+	print "started crf"
 	result = pro.set_data_and_run(img, probvol)
+	print "done with crf"
 	lesion_dice = medpy.dc(result==2,label==2)
 
 
@@ -127,7 +129,9 @@ def run_crf(params, grad):
 
 	#get results
 	for p in processes:
+		print "waiting for result"
 		dices.append(p.get())
+		print "received result"
 
 	dice_average = np.average(dices)
 
