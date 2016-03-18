@@ -62,6 +62,7 @@ def crf_worker(img,label,prob,crfsettings):
 	pro = CRFProcessor.CRF3DProcessor(**crfsettings)
 	print "started crf"
 	result = pro.set_data_and_run(img, probvol)
+	print np.unique(result)
 	print "done with crf"
 	lesion_dice = medpy.metric.dc(result==1,label==2)
 
@@ -170,7 +171,7 @@ if __name__ == '__main__':
 		volumes.append([imgvol_downscaled,labelvol_downscaled,probvol])
 
 	print np.unique(labelvol_downscaled)
-	
+
 	logging.info("Setting up Optimiser")
 	#create optimiser object. We have 9 free parameters.
 	opt = nlopt.opt(nlopt.LN_BOBYQA, 9)
