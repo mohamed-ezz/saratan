@@ -9,6 +9,8 @@ from denseinference import CRFProcessor
 
 from multiprocessing import Pool
 
+import nibabel as nib
+
 import scipy as sp
 
 import os
