@@ -41,13 +41,13 @@ ignore_memory = False
 ###########################
 
 #Use this line on IBBM computers
-#IRCA_BASE_PATH = '/media/nas/01_Datasets/CT/Abdomen/3Dircadb1/niftis_segmented_lesions'
+IRCA_BASE_PATH = '/media/nas/01_Datasets/CT/Abdomen/3Dircadb1/niftis_segmented_lesions'
 #Use the Following line for slu02
-IRCA_BASE_PATH = '/data/niftis_segmented/'
+#IRCA_BASE_PATH = '/data/niftis_segmented/'
 
 #the array after the label element is the voxel spacing
 irca_all= [\
-(301,IRCA_BASE_PATH+"image01.nii",IRCA_BASE_PATH+"label01.nii",[0.57,0.57,1.6],'somepathtoprobvol'),
+(301,IRCA_BASE_PATH+"image01.nii",IRCA_BASE_PATH+"label01.nii",[0.57,0.57,1.6],'/data/lesionprob_v0.csr_matrix'),
 (302,IRCA_BASE_PATH+"image02.nii",IRCA_BASE_PATH+"label02.nii",[0.78,0.78,1.6]),
 (303,IRCA_BASE_PATH+"image03.nii",IRCA_BASE_PATH+"label03.nii",[0.62,0.62,1.25]),
 (304,IRCA_BASE_PATH+"image04.nii",IRCA_BASE_PATH+"label04.nii",[0.74,0.74,2.]),
@@ -91,10 +91,4 @@ irca_train_fold4 = irca_all[:15]
 
 
 #Datset to test
-dataset = [irca_test_fold1]
-#Paths to models. first element corresponds to first fold, second element to second fold etc.
-models = ['/data/final_models/ID34_fold1_100k_0.9.caffemodel']
-deployprototxt = ['/data/final_models/deploy.prototxt']
-
-models_step_two = ['somepath']
-deployprototxt_step_two = ['/data/final_models/deploy.prototxt']
+dataset = [irca_all[1]]
