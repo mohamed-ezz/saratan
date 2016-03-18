@@ -173,7 +173,7 @@ if __name__ == '__main__':
 
 	#Runs optimization
 	logging.info("Running Optimisation")
-	paramsopt = opt.optimize([9.0])
+	paramsopt = opt.optimize([9.0, 20.0, 10.0, 3.0, 9.0, 1.5, 1.5, 9.0, 1.5])
 
 	print paramsopt
 	logging.info(str(paramsopt))
