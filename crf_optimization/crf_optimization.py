@@ -148,6 +148,7 @@ if __name__ == '__main__':
 	logging.getLogger().addHandler(logging.StreamHandler())
 
 	logging.info("Preparing volumes")
+	print [b[1] for b in config.params_initial.items()]
 	for volume in config.dataset:
 		imgvol = nib.load(os.path.normpath(volume[1])).get_data()
 		labelvol = nib.load(os.path.normpath(volume[2])).get_data()
@@ -174,4 +175,6 @@ if __name__ == '__main__':
 	logging.info("Running Optimisation")
 	paramsopt = opt.optimize([b[1] for b in config.params_initial.items()])
 
+	print paramsopt
+	logging.info(str(paramsopt))
 	logging.info("Done")
