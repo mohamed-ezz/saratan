@@ -173,7 +173,7 @@ if __name__ == '__main__':
 
 	#Runs optimization
 	logging.info("Running Optimisation")
-	paramsopt = opt.optimize([b[1] for b in config.params_initial.items()])
+	paramsopt = opt.optimize([9.0])
 
 	print paramsopt
 	logging.info(str(paramsopt))
