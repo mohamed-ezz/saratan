@@ -171,6 +171,7 @@ if __name__ == '__main__':
 		volumes.append([imgvol_downscaled,labelvol_downscaled,probvol])
 
 	print np.unique(labelvol_downscaled)
+	print "Dice before optimisation: " + str(medpy.metric.dc(probvol.argmax(3)==1,labelvol_downscaled==2))
 
 	logging.info("Setting up Optimiser")
 	#create optimiser object. We have 9 free parameters.
