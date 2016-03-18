@@ -91,4 +91,4 @@ irca_train_fold4 = irca_all[:15]
 
 
 #Datset to test
-dataset = [irca_all[1]]
+dataset = [irca_all[0]]
