@@ -70,7 +70,7 @@ def crf_worker(img,label,prob,crfsettings):
 	return lesion_dice
 
 
-def run_crf(params):
+def run_crf(params, secondarg):
 	"""
 
 	:param pos_x_std:
@@ -80,7 +80,8 @@ def run_crf(params):
 	:param bilateral_w:
 	:return:
 	"""
-
+	print secondarg
+	
 	pos_x_std , pos_y_std , pos_z_std, bilateral_x_std, bilateral_y_std, bilateral_z_std, bilateral_intensity_std, pos_w, bilateral_w = params
 
 	logging.info("=======================")
