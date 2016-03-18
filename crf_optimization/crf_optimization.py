@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
 	#The optimizer is supposed to maximise the dice that is returned by run_crf
 	opt.set_max_objective(run_crf)
-
+	opt.set_stopval(.99)
 	opt.set_maxtime(config.MAX_N_IT)
 
 	#Runs optimization
