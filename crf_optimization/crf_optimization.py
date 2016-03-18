@@ -70,15 +70,7 @@ def crf_worker(img,label,prob,crfsettings):
 	return lesion_dice
 
 
-def run_crf(pos_x_std = 1.5
-	, pos_y_std =  1.5
-	, pos_z_std = 1.5
-	, bilateral_x_std = 9.0
-	, bilateral_y_std = 9.0
-	, bilateral_z_std = 9.0
-	, bilateral_intensity_std = 20.0
-	, pos_w = 3.0
-	, bilateral_w = 10.0):
+def run_crf(params):
 	"""
 
 	:param pos_x_std:
@@ -88,6 +80,8 @@ def run_crf(pos_x_std = 1.5
 	:param bilateral_w:
 	:return:
 	"""
+
+	pos_x_std , pos_y_std , pos_z_std, bilateral_x_std, bilateral_y_std, bilateral_z_std, bilateral_intensity_std, pos_w, bilateral_w = params
 
 	logging.info("=======================")
 	logging.info("Running CRF with the following parameters:")
@@ -178,6 +172,6 @@ if __name__ == '__main__':
 
 	#Runs optimization
 	logging.info("Running Optimisation")
-	paramsopt = opt.optimize(**config.params_initial)
+	paramsopt = opt.optimize([b[1] for b in config.params_initial.items()])
 
 	logging.info("Done")
