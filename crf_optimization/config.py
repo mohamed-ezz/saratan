@@ -41,7 +41,7 @@ ignore_memory = False
 ###########################
 
 #Use this line on IBBM computers
-IRCA_BASE_PATH = '/media/nas/01_Datasets/CT/Abdomen/3Dircadb1/niftis_segmented_lesions'
+IRCA_BASE_PATH = '/media/nas/01_Datasets/CT/Abdomen/3Dircadb1/niftis_segmented_lesions/'
 #Use the Following line for slu02
 #IRCA_BASE_PATH = '/data/niftis_segmented/'
 
