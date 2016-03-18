@@ -65,7 +65,7 @@ def crf_worker(img,label,prob,crfsettings):
 	print np.unique(result)
 	print "done with crf"
 	lesion_dice = medpy.metric.dc(result==1,label==2)
-
+	print "Lesion dice of volume: " + str(lesion_dice)
 
 	#not sure if that's necessary
 	del pro
