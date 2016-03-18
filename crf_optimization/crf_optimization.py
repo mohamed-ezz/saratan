@@ -11,6 +11,8 @@ from multiprocessing import Pool
 
 import scipy as sp
 
+import os
+
 
 import medpy.metric
 
@@ -151,8 +153,8 @@ if __name__ == '__main__':
 
 	logging.info("Preparing volumes")
 	for volume in config.dataset:
-		imgvol = nh.load_nifti(volume[1]).get_data()
-		labelvol = nh.load_nifti(volume[2]).get_data()
+		imgvol = nib.load(os.path.normpath(volume[1])).get_data()
+		labelvol = nib.load(os.path.normpath(volume[2])).get_data()
 		probvol = np.load(volume[4])
 
 		#rotate volumes so that the networks sees them in the same orientation like during training
