@@ -63,7 +63,7 @@ def crf_worker(img,label,prob,crfsettings):
 	print "started crf"
 	result = pro.set_data_and_run(img, probvol)
 	print "done with crf"
-	lesion_dice = medpy.dc(result==2,label==2)
+	lesion_dice = medpy.metric.dc(result==2,label==2)
 
 
 	#not sure if that's necessary
