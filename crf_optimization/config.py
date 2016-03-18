@@ -31,7 +31,7 @@ params_initial = dict(
 #Fixed CRF Parameters
 max_iterations = 20
 dynamic_z = True
-ignore_memory = False
+ignore_memory = True
 
 
 

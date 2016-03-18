@@ -70,7 +70,7 @@ def crf_worker(img,label,prob,crfsettings):
 	return lesion_dice
 
 
-def run_crf(params, secondarg):
+def run_crf(params, grad):
 	"""
 
 	:param pos_x_std:
@@ -80,8 +80,10 @@ def run_crf(params, secondarg):
 	:param bilateral_w:
 	:return:
 	"""
-	print secondarg
-	
+
+	#Stupid NLopt it always wants a grad even for algorithms that don't use gradient. If grad is not empty, something is wrong.
+	print grad
+
 	pos_x_std , pos_y_std , pos_z_std, bilateral_x_std, bilateral_y_std, bilateral_z_std, bilateral_intensity_std, pos_w, bilateral_w = params
 
 	logging.info("=======================")
@@ -149,7 +151,7 @@ if __name__ == '__main__':
 	logging.getLogger().addHandler(logging.StreamHandler())
 
 	logging.info("Preparing volumes")
-	print [b[1] for b in config.params_initial.items()]
+
 	for volume in config.dataset:
 		imgvol = nib.load(os.path.normpath(volume[1])).get_data()
 		labelvol = nib.load(os.path.normpath(volume[2])).get_data()
@@ -174,7 +176,7 @@ if __name__ == '__main__':
 
 	#Runs optimization
 	logging.info("Running Optimisation")
-	paramsopt = opt.optimize([9.0, 20.0, 10.0, 3.0, 9.0, 1.5, 1.5, 9.0, 1.5])
+	paramsopt = opt.optimize([b[1] for b in config.params_initial.items()])
 
 	print paramsopt
 	logging.info(str(paramsopt))
