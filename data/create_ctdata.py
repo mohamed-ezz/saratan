@@ -123,7 +123,7 @@ def rotate(img, angle):
 	rotated = rotated[extra_left: -extra_right, extra_left: - extra_right]
 	return rotated
 
-def augment(img, seg, factor=None):
+def augment(img, seg, factor=None, augment_small_liver = config.augment_small_liver):
 	"""
 	Augment image by factor.
 	:param img: img as 2d array
@@ -222,8 +222,24 @@ def augment(img, seg, factor=None):
 		else:
 			break
 
-	#imgs,segs= np.array(imgs), np.array(segs)
-	return imgs,segs
+		if augment_small_liver:
+				liver_percent = 100.0*np.count_nonzero(seg==1) / seg.size
+				if liver_percent < 2.5: #if liver is less than 2.5% of whole image.
+						# 2 random rotations
+						for _ in range(2):
+								rand = random.randrange(-10,10)
+								img_, seg_ = rotate(img, rand), rotate(seg, rand)
+								imgs.append(img_);segs.append(seg_)
+						# 2 random shifts
+						for _ in range(2):
+								rand1 = random.randrange(0,20)
+								rand2 = random.randrange(0,20)
+								img_, seg_ = get_shift(img, seg, -int(width/rand1), int(height/rand2))
+								imgs.append(img_);segs.append(seg_)
+
+
+		#imgs,segs= np.array(imgs), np.array(segs)
+		return imgs,segs
 
 
 def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):

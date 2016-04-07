@@ -21,34 +21,49 @@ import medpy.metric
 #global list for volumes
 volumes = []
 
+#best results so far
+best_dice = -1
+best_params = None
 
-def downscale_img_label(imgvol,label_vol):
+def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
+	""" Converts from hounsfield units to float64 image with range 0.0 to 1.0 """
+	# calc min and max
+	min,max = np.amin(arr), np.amax(arr)
+	arr = arr.astype(IMG_DTYPE)
+	if min <= 0:
+		arr = np.clip(arr, min * c_min, max * c_max)
+		# right shift to zero
+		arr = np.abs(min * c_min) + arr
+	else:
+		arr = np.clip(arr, min, max * c_max)
+		# left shift to zero
+		arr = arr - min
+	# normalization
+	norm_fac = np.amax(arr)
+	if norm_fac != 0:
+		norm = np.divide(
+				np.multiply(arr,255),
+			 	np.amax(arr))
+	else:  # don't divide through 0
+		norm = np.multiply(arr, 255)
+		
+	norm = np.clip(np.multiply(norm, 0.00390625), 0, 1)
+	return norm
+
+def process_img_label(imgvol,segvol):
 	"""
-	Downscales an image volume and an label volume. Normalizes the hounsfield units of the image volume
+	Process a given image volume and its label 
 	:param imgvol:
 	:param label_vol:
 	:return:
 	"""
-	imgvol_downscaled = np.zeros((config.slice_shape[0],config.slice_shape[1],imgvol.shape[2]))
-	label_vol_downscaled = np.zeros((config.slice_shape[0],config.slice_shape[1],imgvol.shape[2]))
+	
+	imgvol[imgvol>1200] = 0
+	imgvol = norm_hounsfield_dyn(imgvol)
 
-	for i in range(imgvol.shape[2]):
-		#Get the current slice, normalize and downscale
-		slice = np.copy(imgvol[:,:,i])
+	return [imgvol, segvol]
 
-		slice[slice>1200] = 0
 
-		slice = nh.hounsfield_to_float_dyn(slice)
-
-		slice = sp.misc.imresize(slice,config.slice_shape)/255.
-
-		#slice = histeq_processor(slice)
-
-		imgvol_downscaled[:,:,i] = slice
-
-		#downscale the label slice for the crf
-		label_vol_downscaled[:,:,i] = sp.misc.imresize(label_vol[:,:,i],config.slice_shape,interp='nearest')
-	return [imgvol_downscaled,label_vol_downscaled]
 
 def crf_worker(img,label,prob,crfsettings):
 	"""
@@ -69,8 +84,10 @@ def crf_worker(img,label,prob,crfsettings):
 
 	#not sure if that's necessary
 	del pro
-
+	
 	return lesion_dice
+
+
 
 
 def run_crf(params, grad):
@@ -89,6 +106,7 @@ def run_crf(params, grad):
 
 	pos_x_std , pos_y_std , pos_z_std, bilateral_x_std, bilateral_y_std, bilateral_z_std, bilateral_intensity_std, pos_w, bilateral_w = params
 
+	
 	logging.info("=======================")
 	logging.info("Running CRF with the following parameters:")
 	logging.info("pos x std: " + str(pos_x_std))
@@ -134,13 +152,22 @@ def run_crf(params, grad):
 		dices.append(p.get())
 		print "received result"
 
+	pool.close()
+
 	dice_average = np.average(dices)
 
-	logging.info("-----------------------")
-	logging.info("Average lesion dice result: " + str(dice_average))
-	logging.info("=======================")
 
-	pool.close()
+	if dice_average >= best_dice:
+		best_params = params
+		best_dice = dice_average
+		
+	
+	logging.info("-----------------------")
+	logging.info("Current avg lesion dice result: " + str(dice_average))
+	logging.info("   with current params :" + str(params))
+	logging.info("Best avg dice so far was: " + str(best_dice))
+	logging.info("   with best params : "+ str(best_params))
+	logging.info("=======================")
 
 	return dice_average
 
@@ -157,35 +184,44 @@ if __name__ == '__main__':
 
 	logging.info("Preparing volumes")
 
-	for volume in config.dataset:
-		imgvol = nib.load(os.path.normpath(volume[1])).get_data()
-		labelvol = nib.load(os.path.normpath(volume[2])).get_data()
-		probvol = np.load(volume[4])
+	for img_path, seg_path, voxelsize, prob_path in config.dataset:
+		imgvol = nib.load(os.path.normpath(img_path)).get_data()
+		segvol = nib.load(os.path.normpath(seg_path)).get_data()
+		probvol = np.load(prob_path)
 
 		#rotate volumes so that the networks sees them in the same orientation like during training
 		imgvol = np.rot90(imgvol)
-		labelvol = np.rot90(labelvol)
+		segvol = np.rot90(segvol)
 
-		imgvol_downscaled, labelvol_downscaled = downscale_img_label(imgvol,labelvol)
+		imgvol, segvol = process_img_label(imgvol,segvol)
 
-		volumes.append([imgvol_downscaled,labelvol_downscaled,probvol])
+		volumes.append([imgvol,segvol,probvol])
 
-	print np.unique(labelvol_downscaled)
-	print "Dice before optimisation: " + str(medpy.metric.dc(probvol.argmax(3)==1,labelvol_downscaled==2))
+	print np.unique(segvol)
+	print "Dice before CRF: " + str(medpy.metric.dc(probvol.argmax(3)==1,segvol==2))
 
 	logging.info("Setting up Optimiser")
 	#create optimiser object. We have 9 free parameters.
 	opt = nlopt.opt(nlopt.LN_BOBYQA, 9)
+	opt.set_lower_bound([0.000000001]*8+[1]) #fix bilateral_weight to 1
+	opt.set_upper_bound([550]*8+[1])
 
 	#The optimizer is supposed to maximise the dice that is returned by run_crf
 	opt.set_max_objective(run_crf)
 	opt.set_stopval(.99)
-	opt.set_maxtime(config.MAX_N_IT)
+	#opt.set_maxtime(config.MAX_N_IT)
 
 	#Runs optimization
 	logging.info("Running Optimisation")
-	paramsopt = opt.optimize([b[1] for b in config.params_initial.items()])
+	paramsopt = opt.optimize(config.params_initial)
 
 	print paramsopt
 	logging.info(str(paramsopt))
 	logging.info("Done")
+	
+	
+	
+	
+	
+	
+	
