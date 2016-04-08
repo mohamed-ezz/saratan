@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import nlopt
 import numpy as np
 
@@ -143,7 +145,10 @@ def run_crf(params, grad):
 	pool = Pool(processes=config.N_PROC)
 
 	#start processes
-	for img, label, prob in volumes:
+	for img, label, voxelsize, prob in volumes:
+		# Normalize z std according to volume's voxel slice spacing
+		copy_crfsettings = dict(crfsettings)
+		copy_crfsettings['pos_z_std'] *= voxelsize[2] # z std grows with larger spacing between slices
 		processes.append(pool.apply_async(crf_worker,(img,label,prob,crfsettings)))
 
 	#get results
@@ -195,7 +200,7 @@ if __name__ == '__main__':
 
 		imgvol, segvol = process_img_label(imgvol,segvol)
 
-		volumes.append([imgvol,segvol,probvol])
+		volumes.append([imgvol,segvol,voxelsize, probvol])
 
 	print np.unique(segvol)
 	print "Dice before CRF: " + str(medpy.metric.dc(probvol.argmax(3)==1,segvol==2))
