@@ -22,6 +22,8 @@ from skimage.transform import PiecewiseAffineTransform, warp
 import cv2
 
 
+
+
 N_PROC = config.N_PROC
 IMG_DTYPE = np.float
 SEG_DTYPE = np.uint8
@@ -241,8 +243,8 @@ def augment(img, seg, factor=None, augment_small_liver = None):
 								imgs.append(img_);segs.append(seg_)
 						# 2 random shifts
 						for _ in range(2):
-								rand1 = random.randrange(0,20)
-								rand2 = random.randrange(0,20)
+								rand1 = random.randrange(1,20)
+								rand2 = random.randrange(1,20)
 								img_, seg_ = get_shift(img, seg, -int(width/rand1), int(height/rand2))
 								imgs.append(img_);segs.append(seg_)
 
@@ -270,7 +272,7 @@ def create_lmdb_keys(uid_sliceidx):
 def is_relevant_slice(slc):
 	""" Checks whether a given slice is relevant, according to rule specified in config.select_slices (e.g., lesion-only)"""
 	max = np.max(slc)
-	if config.irrelevant_slice_include_prob in locals():
+	if hasattr( config,'irrelevant_slice_include_prob'):
 		return random.randrange(100) < config.irrelevant_slice_include_prob
 	if config.select_slices == "liver-lesion":
 		return max == 1 or max == 2
@@ -366,6 +368,8 @@ def process_img_slice(img_seg):
 	""" Process img and seg, and augment them. Return tuple (volume of imgs, volume of segs) 
 	The volume returned is the given image with augmentation, all as a volume (np 3D array)"""
 	img, seg = img_seg
+	
+	#import pdb; pdb.set_trace()
 	# Process Image and window it
 	if config.ct_window_type=='dyn':
 		img = norm_hounsfield_dyn(img, c_min=config.ct_window_type_min,c_max=config.ct_window_type_max)
@@ -373,6 +377,7 @@ def process_img_slice(img_seg):
 		img = norm_hounsfield_stat(img, c_min=config.ct_window_type_min,c_max=config.ct_window_type_max)
 	else:
 		print "CT Windowing did not work."
+
 	img = to_scale(img)
 	# Process Seg
 	seg = np.clip(seg, 0, 2).astype(SEG_DTYPE)
@@ -432,6 +437,7 @@ def process_volume(uid, volume_file, seg_file):
 		# PROCESS SLICES
 		# Given list of (img,seg) tuples, returns list of (img volume, seg volume) tuples
 		# Each slice becomes a volume "due to augmentation"
+		#import pdb; pdb.set_trace()
 		list_of_imgsvol_segsvol= ppool.map(process_img_slice, izip(volume,segmentation))
 		
 	logging.info(segmentation.shape)

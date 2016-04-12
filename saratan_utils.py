@@ -6,6 +6,9 @@ Contains common functions for reading data out of leveldb
 import plyvel, lmdb
 import numpy as np
 from caffe.proto import caffe_pb2
+IMG_DTYPE = np.float
+SEG_DTYPE = np.uint8
+
 
 def denormalize_img_255(arr):
 	""" Denormalizes a nparray to 0-255 values """

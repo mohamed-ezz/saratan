@@ -3,7 +3,7 @@ import logging
 # Logging level
 log_level = logging.WARNING
 # Number of CPUs used for parallel processing
-N_PROC = 4
+N_PROC = 1
 
 # Path of created database
 # This can be a list with multiple paths, but also dataset should be a list of same size
@@ -28,11 +28,12 @@ slice_shape = (388,388)
 # - proexessors.filter_preprocessor
 import create_ctdata as processors
 processors_list = [processors.plain_UNET_processor,processors.filter_preprocessor]
+#processors_list = [processors.plain_UNET_processor]
 
 # Hounsfield Unit Windowing
 # Apply static or dynamic Windowing to the CT data
-# ct_window_type='dyn'
-# ct_window_type_min=0.1
+#ct_window_type='dyn'
+#ct_window_type_min=0.1
 #ct_window_type_max=0.3
 
 ct_window_type='stat'
@@ -64,7 +65,7 @@ augment_small_liver = True
 # lesion-only:  Include only slices which are labeled with lesion or lower (2, 1 or 0)
 # liver-lesion: Include only slices which are labeled with liver or lesion (slices with max=2 or with max=1)
 # all slices: Include slices which are not liver or lesion with a percentage irrelevant_slice_include_prob to enable this feature uncomment
-irrelevant_slice_include_prob=10
+#irrelevant_slice_include_prob=10
 
 select_slices = "liver-lesion"
 

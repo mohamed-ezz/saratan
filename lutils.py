@@ -123,17 +123,19 @@ def norm_hounsfield_stat(arr, c_min=-100, c_max=200):
         slc_0 = np.subtract(c_arr, min)
 
     # normalization
-    norm_fac = np.amax(slc_0)
-    if norm_fac != 0:
-        norm = np.divide(
-            np.multiply(
-                slc_0,
-                255
-            ),
-            np.amax(slc_0)
-        )
-    else:  # don't divide through 0
-        norm = np.multiply(slc_0, 255)
+    #norm_fac = np.amax(slc_0)
+    #if norm_fac != 0:
+
+    #    norm = np.divide(
+    #        np.multiply(
+    #            slc_0,
+    #            255
+    #        ),
+    #        np.amax(slc_0)
+    #    )
+    #else:  # don't divide through 0
+#	print "nope. something nasty"
+    norm = np.multiply(slc_0, 255)
 
     return norm
 
