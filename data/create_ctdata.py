@@ -302,7 +302,7 @@ def plain_UNET_processor(img,seg):
 def filter_preprocessor(img,seg,filter_type=config.filter_type):
 	if filter_type=='median':
 		img=cv2.medianBlur(img,5)
-	elif filter_type=='bilateral'
+	elif filter_type=='bilateral':
 		img=cv2.cv2.bilateralFilter(img,d=5)
 	return img,seg
 
