@@ -3,13 +3,13 @@ import logging
 # Logging level
 log_level = logging.WARNING
 # Number of CPUs used for parallel processing
-N_PROC = 28
+N_PROC = 4
 
 # Path of created database
 # This can be a list with multiple paths, but also dataset should be a list of same size
-lmdb_path = ["/mnt/ID39-UNET/fold1/train", "/mnt/ID32-UNET/fold1/test",\
-			"/mnt/ID39-UNET/fold2/train", "/mnt/ID32-UNET/fold2/test",\
-			"/mnt/ID39-UNET/fold3/train", "/mnt/ID32-UNET/fold3/test"]
+lmdb_path = ["/mnt/ID39-UNET/fold1/train", "/mnt/ID39-UNET/fold1/test",\
+			"/mnt/ID39-UNET/fold2/train", "/mnt/ID39-UNET/fold2/test",\
+			"/mnt/ID39-UNET/fold3/train", "/mnt/ID39-UNET/fold3/test"]
 # Database type : lmdb or leveldb
 backend = "lmdb" 
 # Takes only the first n volumes. Useful to create small datasets fast
@@ -181,7 +181,7 @@ train_set = [\
 ###########################
 ##### 3DIRCA DATASET ######
 ###########################
-IRCA_BASE_PATH = '/data/niftis_segmented/'
+IRCA_BASE_PATH = '/media/nas/01_Datasets/CT/Abdomen/3Dircadb1/niftis_segmented_lesions/'
 irca_all= [\
 (301,IRCA_BASE_PATH+"image01.nii",IRCA_BASE_PATH+"label01.nii",[0.57,0.57,1.6]),
 (302,IRCA_BASE_PATH+"image02.nii",IRCA_BASE_PATH+"label02.nii",[0.78,0.78,1.6]),

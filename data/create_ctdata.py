@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+import pdb
 import sys, os, time, random, shutil
 import numpy as np
 import lmdb, caffe, nibabel
@@ -11,7 +11,9 @@ import plyvel
 from itertools import izip
 import logging
 from contextlib import closing
-from lutils import norm_hounsfield_dyn,norm_hounsfield_stat
+sys.path.append('/data/ID39-UNET-allslices-bilateral-filter/saratan')
+
+from saratan_utils import norm_hounsfield_dyn, norm_hounsfield_stat
 
 ## Deformation Augmentation
 from skimage.transform import PiecewiseAffineTransform, warp
@@ -127,7 +129,7 @@ def rotate(img, angle):
 	rotated = rotated[extra_left: -extra_right, extra_left: - extra_right]
 	return rotated
 
-def augment(img, seg, factor=None, augment_small_liver = config.augment_small_liver):
+def augment(img, seg, factor=None, augment_small_liver = None):
 	"""
 	Augment image by factor.
 	:param img: img as 2d array
@@ -137,6 +139,9 @@ def augment(img, seg, factor=None, augment_small_liver = config.augment_small_li
 	"""
 	if factor is None:
 		factor = config.augmentation_factor
+	if config.augment_small_liver == True:
+		augment_small_liver=True
+
 		
 	# number of available augmentation functions
 	max_fac = 50
@@ -299,7 +304,9 @@ def plain_UNET_processor(img,seg):
 	img=np.pad(img,92,mode='reflect')
 	return img, seg
 
-def filter_preprocessor(img,seg,filter_type=config.filter_type):
+def filter_preprocessor(img,seg,filter_type=None):
+	if config.filter_type in locals():
+		filter_type=config.filter_type
 	if filter_type=='median':
 		img=cv2.medianBlur(img,5)
 	elif filter_type=='bilateral':
@@ -554,7 +561,7 @@ if __name__ == '__main__':
 		os.chmod(copied_path, 292) #chmod 444
 		
 		p = None
-		for uid, volume_file, seg_file in tqdm(dataset):
+		for uid, volume_file, seg_file, voxelspacing in tqdm(dataset):
 			imgvols, segvols, keys_img, keys_seg = process_volume(uid, volume_file, seg_file)
 			# Wait for previous persist_volumes process
 			if p is not None:
