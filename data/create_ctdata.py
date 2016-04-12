@@ -267,6 +267,40 @@ def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
 	norm = np.clip(np.multiply(norm, 0.00390625), 0, 1)
 	return norm
 
+def norm_hounsfield_stat(arr, c_min=-100, c_max=200):
+    min = np.amin(arr)
+
+    arr = np.array(arr, dtype=np.float64)
+
+    if min <= 0:
+        # clip
+        c_arr = np.clip(arr, c_min, c_max)
+
+        # right shift to zero
+        slc_0 = np.add(np.abs(min), c_arr)
+    else:
+        # clip
+        c_arr = np.clip(arr, c_min, c_max)
+
+        # left shift to zero
+        slc_0 = np.subtract(c_arr, min)
+
+    # normalization
+    norm_fac = np.amax(slc_0)
+    if norm_fac != 0:
+        norm = np.divide(
+            np.multiply(
+                slc_0,
+                255
+            ),
+            np.amax(slc_0)
+        )
+    else:  # don't divide through 0
+        norm = np.multiply(slc_0, 255)
+
+    return norm
+
+
 
 def create_lmdb_keys(uid_sliceidx):
 	""" Creates lmdb keys for img and label slices """
@@ -370,8 +404,13 @@ def process_img_slice(img_seg):
 	""" Process img and seg, and augment them. Return tuple (volume of imgs, volume of segs) 
 	The volume returned is the given image with augmentation, all as a volume (np 3D array)"""
 	img, seg = img_seg
-	# Process Image 	
-	img = norm_hounsfield_dyn(img)
+	# Process Image and window it
+	if config.ct_window_type=='dyn':
+		img = norm_hounsfield_dyn(img, c_min=config.ct_window_type_min,c_max=config.ct_window_type_max)
+	elif config.ct_window_type=='stat':
+		img = norm_hounsfield_stat(img, c_min=config.ct_window_type_min,c_max=config.ct_window_type_max)
+	else:
+		print "CT Windowing did not work."
 	img = to_scale(img)
 	# Process Seg
 	seg = np.clip(seg, 0, 2).astype(SEG_DTYPE)

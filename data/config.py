@@ -28,6 +28,16 @@ slice_shape = (388,388)
 import create_ctdata as processors
 processors_list = [processors.liveronly_label_processor, processors.plain_UNET_processor]
 
+# Hounsfield Unit Windowing
+# Apply static or dynamic Windowing to the CT data
+# ct_window_type='dyn'
+# ct_window_type_min=0.1
+#ct_window_type_max=0.3
+
+ct_window_type='stat'
+ct_window_type_min=-100
+ct_window_type_max=200
+
 # Shuffle slices and their augmentations globally across the database
 # You might want to set to False if dataset = test_set
 shuffle_slices = True
