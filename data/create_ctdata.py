@@ -283,6 +283,8 @@ def create_lmdb_keys(uid_sliceidx):
 def is_relevant_slice(slc):
 	""" Checks whether a given slice is relevant, according to rule specified in config.select_slices (e.g., lesion-only)"""
 	max = np.max(slc)
+	if config.irrelevant_slice_include_prob in locals():
+		return random.randrange(100) < config.irrelevant_slice_include_prob
 	if config.select_slices == "liver-lesion":
 		return max == 1 or max == 2
 	elif config.select_slices == "lesion-only":

@@ -46,6 +46,9 @@ augment_small_liver = True
 # liver-only:   Include only slices which are labeld with liver or lower (1 or 0)
 # lesion-only:  Include only slices which are labeled with lesion or lower (2, 1 or 0)
 # liver-lesion: Include only slices which are labeled with liver or lesion (slices with max=2 or with max=1)
+# all slices: Include slices which are not liver or lesion with a percentage irrelevant_slice_include_prob
+irrelevant_slice_include_prob=10
+
 select_slices = "liver-lesion"
 
 # Base path of niftis and segmentation niftis
