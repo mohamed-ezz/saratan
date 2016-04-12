@@ -22,6 +22,8 @@ import IPython
 #this should actually be part of medpy. Apparently it isn't (anymore). So the surface.py file from http://pydoc.net/Python/MedPy/0.2.2/medpy.metric._surface/ should be manually imported
 from surface import Surface
 
+from lutils import norm_hounsfield_stat,norm_hounsfield_dyn
+
 IMG_DTYPE = np.float
 SEG_DTYPE = np.uint8
 
@@ -80,30 +82,6 @@ def miccaiimshow(img,seg,preds,fname,titles=None, plot_separate_img=True):
 	plt.close()
 	
 	
-def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
-	""" Converts from hounsfield units to float64 image with range 0.0 to 1.0 """
-	# calc min and max
-	min,max = np.amin(arr), np.amax(arr)
-	arr = arr.astype(IMG_DTYPE)
-	if min <= 0:
-		arr = np.clip(arr, min * c_min, max * c_max)
-		# right shift to zero
-		arr = np.abs(min * c_min) + arr
-	else:
-		arr = np.clip(arr, min, max * c_max)
-		# left shift to zero
-		arr = arr - min
-	# normalization
-	norm_fac = np.amax(arr)
-	if norm_fac != 0:
-		norm = np.divide(
-				np.multiply(arr,255),
-			 	np.amax(arr))
-	else:  # don't divide through 0
-		norm = np.multiply(arr, 255)
-		
-	norm = np.clip(np.multiply(norm, 0.00390625), 0, 1)
-	return norm
 
 
 def to_scale(img, shape=None):
@@ -158,7 +136,12 @@ def downscale_img_label(imgvol,label_vol):
 		#Get the current slc, normalize and downscale
 		slc = imgvol[:,:,i]
 		
-		slc = norm_hounsfield_dyn(slc)
+		if config.ct_window_type=='dyn':
+			img = norm_hounsfield_dyn(img, c_min=config.ct_window_type_min,c_max=config.ct_window_type_max)
+		elif config.ct_window_type=='stat':
+			img = norm_hounsfield_stat(img, c_min=config.ct_window_type_min,c_max=config.ct_window_type_max)
+		else:
+			print "CT Windowing did not work."
 
 		slc = to_scale(slc, config.slice_shape)
 

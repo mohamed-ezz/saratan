@@ -79,7 +79,63 @@ def to_numpy_matrix(v):
 	matrix = matrix.reshape((datum.height, datum.width))
 	return matrix
 
+def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
+	""" Converts from hounsfield units to float64 image with range 0.0 to 1.0 """
+	# calc min and max
+	min,max = np.amin(arr), np.amax(arr)
+	arr = arr.astype(IMG_DTYPE)
+	if min <= 0:
+		arr = np.clip(arr, min * c_min, max * c_max)
+		# right shift to zero
+		arr = np.abs(min * c_min) + arr
+	else:
+		arr = np.clip(arr, min, max * c_max)
+		# left shift to zero
+		arr = arr - min
+	# normalization
+	norm_fac = np.amax(arr)
+	if norm_fac != 0:
+		norm = np.divide(
+				np.multiply(arr,255),
+			 	np.amax(arr))
+	else:  # don't divide through 0
+		norm = np.multiply(arr, 255)
 
+	norm = np.clip(np.multiply(norm, 0.00390625), 0, 1)
+	return norm
+
+def norm_hounsfield_stat(arr, c_min=-100, c_max=200):
+    min = np.amin(arr)
+
+    arr = np.array(arr, dtype=np.float64)
+
+    if min <= 0:
+        # clip
+        c_arr = np.clip(arr, c_min, c_max)
+
+        # right shift to zero
+        slc_0 = np.add(np.abs(min), c_arr)
+    else:
+        # clip
+        c_arr = np.clip(arr, c_min, c_max)
+
+        # left shift to zero
+        slc_0 = np.subtract(c_arr, min)
+
+    # normalization
+    norm_fac = np.amax(slc_0)
+    if norm_fac != 0:
+        norm = np.divide(
+            np.multiply(
+                slc_0,
+                255
+            ),
+            np.amax(slc_0)
+        )
+    else:  # don't divide through 0
+        norm = np.multiply(slc_0, 255)
+
+    return norm
 
 class CaffeDatabase():
 	""" Abstraction layer over lmdb and leveldb """
@@ -101,6 +157,5 @@ class CaffeDatabase():
 			it = self.db.iterator()
 		return it
 		
-		
-		
+
 		
