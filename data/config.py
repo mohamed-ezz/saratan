@@ -25,8 +25,9 @@ slice_shape = (388,388)
 #  - processors.plain_UNET_processor
 #  - processors.histeq_processor
 #  - processors.liveronly_label_processor
+# - proexessors.filter_preprocessor
 import create_ctdata as processors
-processors_list = [processors.liveronly_label_processor, processors.plain_UNET_processor]
+processors_list = [processors.plain_UNET_processor,processors.filter_preprocessor]
 
 # Hounsfield Unit Windowing
 # Apply static or dynamic Windowing to the CT data
@@ -41,6 +42,12 @@ ct_window_type_max=200
 # Shuffle slices and their augmentations globally across the database
 # You might want to set to False if dataset = test_set
 shuffle_slices = True
+
+# Image Filtering
+# Filter the Images as preprocessing
+
+filter_type='median'
+
 
 # Augmentation factor 
 augmentation_factor = 17

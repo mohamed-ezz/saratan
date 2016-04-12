@@ -16,6 +16,9 @@ from lutils import norm_hounsfield_dyn,norm_hounsfield_stat
 ## Deformation Augmentation
 from skimage.transform import PiecewiseAffineTransform, warp
 
+## Add Image Filtering
+import cv2
+
 
 N_PROC = config.N_PROC
 IMG_DTYPE = np.float
@@ -295,6 +298,13 @@ def plain_UNET_processor(img,seg):
 	#seg=np.pad(seg,((92,92),(92,92)),mode='reflect')
 	img=np.pad(img,92,mode='reflect')
 	return img, seg
+
+def filter_preprocessor(img,seg,filter_type=config.filter_type):
+	if filter_type=='median':
+		img=cv2.medianBlur(img,5)
+	elif filter_type=='bilateral'
+		img=cv2.cv2.bilateralFilter(img,d=5)
+	return img,seg
 
 def liveronly_label_processor(img, seg):
 	"""Converts lesion labels to liver label. The resulting classifier classifies liver vs. background."""
