@@ -7,9 +7,9 @@ N_PROC = 28
 
 # Path of created database
 # This can be a list with multiple paths, but also dataset should be a list of same size
-lmdb_path = ["/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold1/train", "/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold1/test",\
-			"/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold2/train", "/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold2/test",\
-			"/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold3/train", "/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold3/test"]
+lmdb_path = ["/mnt/ID39-UNET/fold1/train", "/mnt/ID32-UNET/fold1/test",\
+			"/mnt/ID39-UNET/fold2/train", "/mnt/ID32-UNET/fold2/test",\
+			"/mnt/ID39-UNET/fold3/train", "/mnt/ID32-UNET/fold3/test"]
 # Database type : lmdb or leveldb
 backend = "lmdb" 
 # Takes only the first n volumes. Useful to create small datasets fast
@@ -46,7 +46,7 @@ shuffle_slices = True
 # Image Filtering
 # Filter the Images as preprocessing
 
-filter_type='median'
+filter_type='bilateral'
 
 
 # Augmentation factor 
@@ -63,7 +63,7 @@ augment_small_liver = True
 # liver-only:   Include only slices which are labeld with liver or lower (1 or 0)
 # lesion-only:  Include only slices which are labeled with lesion or lower (2, 1 or 0)
 # liver-lesion: Include only slices which are labeled with liver or lesion (slices with max=2 or with max=1)
-# all slices: Include slices which are not liver or lesion with a percentage irrelevant_slice_include_prob
+# all slices: Include slices which are not liver or lesion with a percentage irrelevant_slice_include_prob to enable this feature uncomment
 irrelevant_slice_include_prob=10
 
 select_slices = "liver-lesion"
