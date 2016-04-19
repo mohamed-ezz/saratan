@@ -110,7 +110,7 @@ def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
 def norm_hounsfield_stat(arr, c_min=-100, c_max=200):
     min = np.amin(arr)
 
-    arr = np.array(arr, dtype=np.float64)
+    arr = np.array(arr, dtype=IMG_DTYPE)
 
     if min <= 0:
         # clip
@@ -138,6 +138,7 @@ def norm_hounsfield_stat(arr, c_min=-100, c_max=200):
     else:  # don't divide through 0
         norm = np.multiply(slc_0, 255)
 
+	norm = np.clip(np.multiply(norm, 0.00390625), 0, 1)
     return norm
 
 class CaffeDatabase():
