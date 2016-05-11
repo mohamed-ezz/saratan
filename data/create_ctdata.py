@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-
+import pdb
 import sys, os, time, random, shutil
 import numpy as np
 import lmdb, caffe, nibabel
@@ -11,9 +11,17 @@ import plyvel
 from itertools import izip
 import logging
 from contextlib import closing
+sys.path.append('/data/ID39-UNET-allslices-bilateral-filter/saratan')
+
+from saratan_utils import norm_hounsfield_dyn, norm_hounsfield_stat
 
 ## Deformation Augmentation
 from skimage.transform import PiecewiseAffineTransform, warp
+
+## Add Image Filtering
+import cv2
+
+
 
 
 N_PROC = config.N_PROC
@@ -123,7 +131,7 @@ def rotate(img, angle):
 	rotated = rotated[extra_left: -extra_right, extra_left: - extra_right]
 	return rotated
 
-def augment(img, seg, factor=None, augment_small_liver = config.augment_small_liver):
+def augment(img, seg, factor=None, augment_small_liver = None):
 	"""
 	Augment image by factor.
 	:param img: img as 2d array
@@ -133,6 +141,9 @@ def augment(img, seg, factor=None, augment_small_liver = config.augment_small_li
 	"""
 	if factor is None:
 		factor = config.augmentation_factor
+	if config.augment_small_liver == True:
+		augment_small_liver=True
+
 		
 	# number of available augmentation functions
 	max_fac = 50
@@ -232,8 +243,8 @@ def augment(img, seg, factor=None, augment_small_liver = config.augment_small_li
 								imgs.append(img_);segs.append(seg_)
 						# 2 random shifts
 						for _ in range(2):
-								rand1 = random.randrange(0,20)
-								rand2 = random.randrange(0,20)
+								rand1 = random.randrange(1,20)
+								rand2 = random.randrange(1,20)
 								img_, seg_ = get_shift(img, seg, -int(width/rand1), int(height/rand2))
 								imgs.append(img_);segs.append(seg_)
 
@@ -242,30 +253,8 @@ def augment(img, seg, factor=None, augment_small_liver = config.augment_small_li
 		return imgs,segs
 
 
-def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
-	""" Converts from hounsfield units to float64 image with range 0.0 to 1.0 """
-	# calc min and max
-	min,max = np.amin(arr), np.amax(arr)
-	arr = arr.astype(IMG_DTYPE)
-	if min <= 0:
-		arr = np.clip(arr, min * c_min, max * c_max)
-		# right shift to zero
-		arr = np.abs(min * c_min) + arr
-	else:
-		arr = np.clip(arr, min, max * c_max)
-		# left shift to zero
-		arr = arr - min
-	# normalization
-	norm_fac = np.amax(arr)
-	if norm_fac != 0:
-		norm = np.divide(
-				np.multiply(arr,255),
-			 	np.amax(arr))
-	else:  # don't divide through 0
-		norm = np.multiply(arr, 255)
-		
-	norm = np.clip(np.multiply(norm, 0.00390625), 0, 1)
-	return norm
+
+
 
 
 def create_lmdb_keys(uid_sliceidx):
@@ -283,6 +272,8 @@ def create_lmdb_keys(uid_sliceidx):
 def is_relevant_slice(slc):
 	""" Checks whether a given slice is relevant, according to rule specified in config.select_slices (e.g., lesion-only)"""
 	max = np.max(slc)
+	if hasattr( config,'irrelevant_slice_include_prob'):
+		return random.randrange(100) < config.irrelevant_slice_include_prob
 	if config.select_slices == "liver-lesion":
 		return max == 1 or max == 2
 	elif config.select_slices == "lesion-only":
@@ -314,6 +305,15 @@ def plain_UNET_processor(img,seg):
 	#seg=np.pad(seg,((92,92),(92,92)),mode='reflect')
 	img=np.pad(img,92,mode='reflect')
 	return img, seg
+
+def filter_preprocessor(img,seg,filter_type=None):
+	if config.filter_type in locals():
+		filter_type=config.filter_type
+	if filter_type=='median':
+		img=cv2.medianBlur(img,5)
+	elif filter_type=='bilateral':
+		img=cv2.cv2.bilateralFilter(img,d=5)
+	return img,seg
 
 def liveronly_label_processor(img, seg):
 	"""Converts lesion labels to liver label. The resulting classifier classifies liver vs. background."""
@@ -368,8 +368,16 @@ def process_img_slice(img_seg):
 	""" Process img and seg, and augment them. Return tuple (volume of imgs, volume of segs) 
 	The volume returned is the given image with augmentation, all as a volume (np 3D array)"""
 	img, seg = img_seg
-	# Process Image 	
-	img = norm_hounsfield_dyn(img)
+	
+	#import pdb; pdb.set_trace()
+	# Process Image and window it
+	if config.ct_window_type=='dyn':
+		img = norm_hounsfield_dyn(img, c_min=config.ct_window_type_min,c_max=config.ct_window_type_max)
+	elif config.ct_window_type=='stat':
+		img = norm_hounsfield_stat(img, c_min=config.ct_window_type_min,c_max=config.ct_window_type_max)
+	else:
+		print "CT Windowing did not work."
+
 	img = to_scale(img)
 	# Process Seg
 	seg = np.clip(seg, 0, 2).astype(SEG_DTYPE)
@@ -429,6 +437,7 @@ def process_volume(uid, volume_file, seg_file):
 		# PROCESS SLICES
 		# Given list of (img,seg) tuples, returns list of (img volume, seg volume) tuples
 		# Each slice becomes a volume "due to augmentation"
+		#import pdb; pdb.set_trace()
 		list_of_imgsvol_segsvol= ppool.map(process_img_slice, izip(volume,segmentation))
 		
 	logging.info(segmentation.shape)
@@ -558,7 +567,7 @@ if __name__ == '__main__':
 		os.chmod(copied_path, 292) #chmod 444
 		
 		p = None
-		for uid, volume_file, seg_file in tqdm(dataset):
+		for uid, volume_file, seg_file, voxelspacing in tqdm(dataset):
 			imgvols, segvols, keys_img, keys_seg = process_volume(uid, volume_file, seg_file)
 			# Wait for previous persist_volumes process
 			if p is not None:

@@ -6,6 +6,9 @@ Contains common functions for reading data out of leveldb
 import plyvel, lmdb
 import numpy as np
 from caffe.proto import caffe_pb2
+IMG_DTYPE = np.float
+SEG_DTYPE = np.uint8
+
 
 def denormalize_img_255(arr):
 	""" Denormalizes a nparray to 0-255 values """
@@ -107,7 +110,7 @@ def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
 def norm_hounsfield_stat(arr, c_min=-100, c_max=200):
     min = np.amin(arr)
 
-    arr = np.array(arr, dtype=np.float64)
+    arr = np.array(arr, dtype=IMG_DTYPE)
 
     if min <= 0:
         # clip
@@ -123,20 +126,19 @@ def norm_hounsfield_stat(arr, c_min=-100, c_max=200):
         slc_0 = np.subtract(c_arr, min)
 
     # normalization
-    #norm_fac = np.amax(slc_0)
-    #if norm_fac != 0:
+    norm_fac = np.amax(slc_0)
+    if norm_fac != 0:
+        norm = np.divide(
+            np.multiply(
+                slc_0,
+                255
+            ),
+            np.amax(slc_0)
+        )
+    else:  # don't divide through 0
+        norm = np.multiply(slc_0, 255)
 
-    #    norm = np.divide(
-    #        np.multiply(
-    #            slc_0,
-    #            255
-    #        ),
-    #        np.amax(slc_0)
-    #    )
-    #else:  # don't divide through 0
-#	print "nope. something nasty"
-    norm = np.multiply(slc_0, 255)
-
+	norm = np.clip(np.multiply(norm, 0.00390625), 0, 1)
     return norm
 
 class CaffeDatabase():

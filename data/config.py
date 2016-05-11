@@ -3,13 +3,13 @@ import logging
 # Logging level
 log_level = logging.WARNING
 # Number of CPUs used for parallel processing
-N_PROC = 28
+N_PROC = 1
 
 # Path of created database
 # This can be a list with multiple paths, but also dataset should be a list of same size
-lmdb_path = ["/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold1/train", "/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold1/test",\
-			"/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold2/train", "/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold2/test",\
-			"/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold3/train", "/mnt/ID32-UNET-LiverOnlyLabel-572-liverlesion/fold3/test"]
+lmdb_path = ["/mnt/ID39-UNET/fold1/train", "/mnt/ID39-UNET/fold1/test",\
+			"/mnt/ID39-UNET/fold2/train", "/mnt/ID39-UNET/fold2/test",\
+			"/mnt/ID39-UNET/fold3/train", "/mnt/ID39-UNET/fold3/test"]
 # Database type : lmdb or leveldb
 backend = "lmdb" 
 # Takes only the first n volumes. Useful to create small datasets fast
@@ -25,12 +25,30 @@ slice_shape = (388,388)
 #  - processors.plain_UNET_processor
 #  - processors.histeq_processor
 #  - processors.liveronly_label_processor
+# - proexessors.filter_preprocessor
 import create_ctdata as processors
-processors_list = [processors.liveronly_label_processor, processors.plain_UNET_processor]
+processors_list = [processors.plain_UNET_processor,processors.filter_preprocessor]
+#processors_list = [processors.plain_UNET_processor]
+
+# Hounsfield Unit Windowing
+# Apply static or dynamic Windowing to the CT data
+#ct_window_type='dyn'
+#ct_window_type_min=0.1
+#ct_window_type_max=0.3
+
+ct_window_type='stat'
+ct_window_type_min=-100
+ct_window_type_max=200
 
 # Shuffle slices and their augmentations globally across the database
 # You might want to set to False if dataset = test_set
 shuffle_slices = True
+
+# Image Filtering
+# Filter the Images as preprocessing
+
+filter_type='bilateral'
+
 
 # Augmentation factor 
 augmentation_factor = 17
@@ -46,6 +64,9 @@ augment_small_liver = True
 # liver-only:   Include only slices which are labeld with liver or lower (1 or 0)
 # lesion-only:  Include only slices which are labeled with lesion or lower (2, 1 or 0)
 # liver-lesion: Include only slices which are labeled with liver or lesion (slices with max=2 or with max=1)
+# all slices: Include slices which are not liver or lesion with a percentage irrelevant_slice_include_prob to enable this feature uncomment
+#irrelevant_slice_include_prob=10
+
 select_slices = "liver-lesion"
 
 # Base path of niftis and segmentation niftis
@@ -161,7 +182,7 @@ train_set = [\
 ###########################
 ##### 3DIRCA DATASET ######
 ###########################
-IRCA_BASE_PATH = '/data/niftis_segmented/'
+IRCA_BASE_PATH = '/media/nas/01_Datasets/CT/Abdomen/3Dircadb1/niftis_segmented_lesions/'
 irca_all= [\
 (301,IRCA_BASE_PATH+"image01.nii",IRCA_BASE_PATH+"label01.nii",[0.57,0.57,1.6]),
 (302,IRCA_BASE_PATH+"image02.nii",IRCA_BASE_PATH+"label02.nii",[0.78,0.78,1.6]),
