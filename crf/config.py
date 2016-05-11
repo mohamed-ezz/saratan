@@ -16,17 +16,35 @@ MAX_N_IT = -1
 slice_shape = (388,388)
 
 #Initial Parameters
-params_initial = [\
-1.5,  # pos_x_std
-1.5,  # pos_y_std
-1.5,  # pos_z_std
-9.0,  # bilateral_x_std
-9.0,  # bilateral_y_std
-9.0,  # bilateral_z_std
+params_initial_liver = [\
+3,  # pos_x_std
+0.75,  # pos_y_std
+3,  # pos_z_std
+60,  # bilateral_x_std
+15,  # bilateral_y_std
+15,  # bilateral_z_std
 20.0, # bilateral_intensity_std
-3.0,  # pos_w
+0.75,  # pos_w
 1.0   # bilateral_w  #we fix this one during optimization
 ]
+
+params_initial_lesion = [\
+3.0,  # pos_x_std
+3.0,  # pos_y_std
+3.0,  # pos_z_std
+60.0,  # bilateral_x_std
+60.0,  # bilateral_y_std
+60.0,  # bilateral_z_std
+20.0, # bilateral_intensity_std
+3.0,  # pos_w
+10.0   # bilateral_w  #we fix this one during optimization
+]
+
+
+### CHOOSE LIVER OR LESION
+params_initial = params_initial_liver
+target_label = 1
+
 
 #Fixed CRF Parameters
 max_iterations = 20
@@ -47,7 +65,8 @@ IRCA_BASE_PATH = '/media/nas/01_Datasets/CT/Abdomen/3Dircadb1/niftis_segmented_l
 
 #the array after the label element is the voxel spacing
 IRCA_PROBS_PATH = "/media/nas/03_Users/05_mohamedezz/prob_volumes/"
-IRCA_PROBS_SUFFIX = ".lesion.npy"
+#IRCA_PROBS_SUFFIX = ".lesion.npy"
+IRCA_PROBS_SUFFIX = ".liver.npy"
 irca_all= [\
 (301,IRCA_BASE_PATH+"image01.nii",IRCA_BASE_PATH+"label01.nii",[0.57,0.57,1.6],IRCA_PROBS_PATH+"image01.nii"+IRCA_PROBS_SUFFIX),
 (302,IRCA_BASE_PATH+"image02.nii",IRCA_BASE_PATH+"label02.nii",[0.78,0.78,1.6],IRCA_PROBS_PATH+"image02.nii"+IRCA_PROBS_SUFFIX),
@@ -93,4 +112,4 @@ irca_train_fold4 = irca_all[:15]
 
 
 #Datset to test
-dataset = irca_all[:1]
+dataset = irca_all[:5]
