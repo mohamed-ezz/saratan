@@ -22,6 +22,38 @@ plot_every_n_slices = -1
 
 
 ###########################
+##### FIRE3  DATASET ######
+###########################
+
+# Base path of niftis and segmentation niftis
+BASE_PATH = "/media/nas/niftis_segmented"
+
+
+fire3_test_set = [\
+(2,BASE_PATH+"/CRF_035/2008-05-20/Brilliance_64/segmented/02770001.nii",BASE_PATH+"/CRF_035/2008-05-20/Brilliance_64/segmented/02770001_liv_1_clipped.nii"),
+(4,BASE_PATH+"/CRF_036/2008-02-04/Emotion_Duo/segmented/03150001.nii",BASE_PATH+"/CRF_036/2008-02-04/Emotion_Duo/segmented/03150001_liv_3_clipped.nii"),
+(21,BASE_PATH+"/CRF_103/2008-11-14/Brilliance_6_Dunlee/segmented/3774867.nii",BASE_PATH+"/CRF_103/2008-11-14/Brilliance_6_Dunlee/segmented/3774867_liv_x_clipped.nii"),
+(23,BASE_PATH+"/CRF_143/2007-12-04/LightSpeed_Pro_32/segmented/3816280.nii",BASE_PATH+"/CRF_143/2007-12-04/LightSpeed_Pro_32/segmented/3816280_liver_0_clipped.nii"),
+(22,BASE_PATH+"/CRF_103/2009-07-29/Brilliance_6_Dunlee/segmented/3772968.nii",BASE_PATH+"/CRF_103/2009-07-29/Brilliance_6_Dunlee/segmented/3772968_liv_x_clipped.nii"),
+(33,BASE_PATH+"/CRF_223/2008-07-22/Sensation_16/segmented/3917859.nii",BASE_PATH+"/CRF_223/2008-07-22/Sensation_16/segmented/3917859_liv_x_clipped.nii"),
+(36,BASE_PATH+"/CRF_223/2009-03-27/Sensation_16/segmented/28840001.nii",BASE_PATH+"/CRF_223/2009-03-27/Sensation_16/segmented/28840001_liv_x_clipped.nii"),
+(28,BASE_PATH+"/CRF_174/2013-04-12/LightSpeed_Pro_32/segmented/372109.nii",BASE_PATH+"/CRF_174/2013-04-12/LightSpeed_Pro_32/segmented/372109_liv_x_clipped.nii"),
+(45,BASE_PATH+"/CRF_734/2011-06-28/Sensation_16/segmented/86110001.nii",BASE_PATH+"/CRF_734/2011-06-28/Sensation_16/segmented/86110001_liv_x_clipped.nii"),
+(46,BASE_PATH+"/CRF_734/2011-04-19/undefined/segmented/86180001.nii",BASE_PATH+"/CRF_734/2011-04-19/undefined/segmented/86180001_liv_x_clipped.nii"),
+(49,BASE_PATH+"/CRF_750/2011-09-23/iCT_256/segmented/86910001.nii",BASE_PATH+"/CRF_750/2011-09-23/iCT_256/segmented/86910001_liv_x_clipped.nii"),
+(30,BASE_PATH+"/CRF_174/2013-12-06/LightSpeed_Pro_32/segmented/368984.nii",BASE_PATH+"/CRF_174/2013-12-06/LightSpeed_Pro_32/segmented/368984_liv_x_clipped.nii"),
+(56,BASE_PATH+"/CRF_841/2013-01-24/SOMATOM_Definition_AS/segmented/200424.nii",BASE_PATH+"/CRF_841/2013-01-24/SOMATOM_Definition_AS/segmented/200424_liv_x_clipped.nii"),
+(61,BASE_PATH+"/CRF_756/2011-06-17/Definition_AS+/segmented/87840001.nii",BASE_PATH+"/CRF_756/2011-06-17/Definition_AS+/segmented/87840001_liv_x_clipped.nii"),
+(63,BASE_PATH+"/CRF_512/2011-10-18/SOMATOM_Definition_AS/segmented/66090001.nii",BASE_PATH+"/CRF_512/2011-10-18/SOMATOM_Definition_AS/segmented/66090001_liv_x_clipped.nii"),
+(70,BASE_PATH+"/CRF_485/2010-08-11/Emotion_16_(2007)/segmented/3292245.nii",BASE_PATH+"/CRF_485/2010-08-11/Emotion_16_(2007)/segmented/3292245_liv_x_clipped.nii"),
+(80,BASE_PATH+"/CRF_336/2012-04-26/Brilliance_10/segmented/3558746.nii",BASE_PATH+"/CRF_336/2012-04-26/Brilliance_10/segmented/3558746_liv_x_clipped.nii"),
+(84,BASE_PATH+"/CRF_335/2011-10-21/Brilliance_10/segmented/3581986.nii",BASE_PATH+"/CRF_335/2011-10-21/Brilliance_10/segmented/3581986_liv_x_clipped.nii"),
+(90,BASE_PATH+"/CRF_141/2007-11-22/Sensation_16/segmented/20610001.nii",BASE_PATH+"/CRF_141/2007-11-22/Sensation_16/segmented/20610001_liv_x_clipped.nii"),
+(100,BASE_PATH+"/CRF_272/2008-10-30/Defenition/segmented/34180001.nii",BASE_PATH+"/CRF_272/2008-10-30/Defenition/segmented/34180001_liv_x_clipped.nii")]
+
+
+
+###########################
 ##### 3DIRCA DATASET ######
 ###########################
 
@@ -64,7 +96,7 @@ irca_test_fold3 = irca_all[10:15]
 irca_train_fold3 = irca_all[:10]
 
 #Datset to test
-dataset = [irca_test_fold1, irca_test_fold2, irca_test_fold3]
+dataset = [fire3_test_set]
 #Paths to models. first element corresponds to first fold, second element to second fold etc.
 #bs='/media/nas/03_Users/05_mohamedezz/miccai-models/'
 bs='/data/miccai-models/'
