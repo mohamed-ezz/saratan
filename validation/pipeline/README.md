@@ -8,6 +8,7 @@ A pipeline is composed of the following components :
 - Reporter		-- aggregates and writes metrics of different inputs into some report format (e.g., CSV or Excel)
 
 How to use the validation framework :
+
  1. Create classes for all 6 tasks. Each of your classes inherit from one of the *Task classes in validation_task.py
 	- For an example of these classes, look at saratan/validation/pipeline/example.py
  1. Edit this config file so that Pipeline.InputIterator points to your inputIterator task class, and same for the other tasks
@@ -15,6 +16,7 @@ How to use the validation framework :
  1. Run python saratan/validation/pipeline/validate.py
 
 Notes:
+
  1. validate.py will pass the output of each step, as an input to the next step, without really checking what it is.
 	- with the exception that Reporter takes also the output of InputIterator
 	- it is the user's responsibility to make sure the output of one step matches the input of the next step
