@@ -3,6 +3,12 @@ Created on May 11, 2016
 
 @author: Mohamed.Ezz
 '''
+
+#add relevant directory to pythonpath
+import os, sys
+sys.path.insert(1,os.path.abspath('../../'))
+
+
 from config import Pipeline
 import validation.pipeline.validation_task
 

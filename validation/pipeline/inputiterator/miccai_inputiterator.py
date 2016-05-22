@@ -1,10 +1,14 @@
 from validation.pipeline.validation_task import *
+import validation.pipeline.miccai_config as miccai_config
 import numpy as np
 
 
 class myInputIterator(InputIteratorTask):
 	def run(self):
 		print "Welcome to the MICCAI pipeline validation"
-		inputs = [(1,2,3), (4,5,6), (6,7,8)]
-		for i in inputs:
-			yield i
+
+		fold_index = 1
+		for fold in miccai_config.dataset:
+			for input in fold:
+				yield [fold_index, input]
+			fold_index += 1
