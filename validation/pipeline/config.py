@@ -38,7 +38,16 @@ Notes:
 	under saratan/validate/pipeline/{inputiterator or preprocessor or ....}
 5- The code controlling the flow of the pipeline is in saratan/validation/pipeline/validate.py
 '''
-from validation.pipeline.example import *
+
+#for example use this
+#from validation.pipeline.example import *
+
+from validation.pipeline.evaluator.miccai_evaluator import *
+from validation.pipeline.inputiterator.miccai_inputiterator import *
+from validation.pipeline.postprocessor.miccai_postprocessor import *
+from validation.pipeline.predictor.miccai_predictor import *
+from validation.pipeline.preprocessor.miccai_preprocessor import *
+from validation.pipeline.reporter.miccai_reporter import *
 
 class Pipeline:
 	""" Controls the flow of the pipeline """
