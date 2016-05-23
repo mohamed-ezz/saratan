@@ -6,7 +6,7 @@ It contains the code used for the paper `Automatic Liver and Lesion Segmentation
 
 Folder description :
 
- 1. *data* : everything related to data creation and processing
+ 1. *data* : everything related to data creation and processing, and also Caffe python layers
  1. *deploy* : files needed to deploy a machine with Nvidia drivers and a ready caffe container
  1. *validation* : Scripts to do End-to-End validation a given model, reporting all desired scores.
  1. *notebooks* : template notebooks. For example realtime training notebook to train a network and see realtime curves and image prediction examples.
