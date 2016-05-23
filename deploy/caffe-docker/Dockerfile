@@ -64,7 +64,7 @@ RUN cd /opt && git clone -b master https://IBBM_Ops:kfh7jibbmh3e8q95fqv5dx5q@bit
 RUN cd /opt/denseinferencewrapper && make && pip install .
 # Clone Saratan project
 RUN cd /opt/ && git clone https://IBBM_Ops:kfh7jibbmh3e8q95fqv5dx5q@bitbucket.org/patrickchrist/saratan.git
-ENV PYTHONPATH /opt/caffe/python:/opt/saratan/
+ENV PYTHONPATH /opt/caffe/python:/opt/saratan/:/opt/saratan/data/layers
 
 
 # Install caffe python dependencies
