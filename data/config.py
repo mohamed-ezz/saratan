@@ -1,19 +1,29 @@
 import logging
-
 # Logging level
 log_level = logging.WARNING
 # Number of CPUs used for parallel processing
-N_PROC = 1
+
+N_PROC = 14
 
 # Path of created database
 # This can be a list with multiple paths, but also dataset should be a list of same size
-lmdb_path = ["/mnt/ID39-UNET/fold1/train", "/mnt/ID39-UNET/fold1/test",\
-			"/mnt/ID39-UNET/fold2/train", "/mnt/ID39-UNET/fold2/test",\
-			"/mnt/ID39-UNET/fold3/train", "/mnt/ID39-UNET/fold3/test"]
+lmdb_path = ["/mnt/ID40-UNET-LiverOnlyLabel-572-liverlesion-AugSmallLiver/train", "/mnt/ID40-UNET-LiverOnlyLabel-572-liverlesion-AugSmallLiver/validation"]
 # Database type : lmdb or leveldb
 backend = "lmdb" 
 # Takes only the first n volumes. Useful to create small datasets fast
 max_volumes = -1
+
+# whether to increase samples whose liver is small (less than 
+# If liver pixels is less than small_liver_percent, it will be considered small liver
+augment_small_liver = True
+small_liver_percent = 2.5 
+
+# Shuffle slices and their augmentations globally across the database
+# You might want to set to False if dataset = test_set
+shuffle_slices = True
+
+# Augmentation factor 
+augmentation_factor = 11
 
 # Image/Seg shape
 slice_shape = (388,388)
@@ -25,6 +35,7 @@ slice_shape = (388,388)
 #  - processors.plain_UNET_processor
 #  - processors.histeq_processor
 #  - processors.liveronly_label_processor
+
 # - proexessors.filter_preprocessor
 import create_ctdata as processors
 processors_list = [processors.plain_UNET_processor,processors.filter_preprocessor]
@@ -40,9 +51,7 @@ ct_window_type='stat'
 ct_window_type_min=-100
 ct_window_type_max=200
 
-# Shuffle slices and their augmentations globally across the database
-# You might want to set to False if dataset = test_set
-shuffle_slices = True
+
 
 # Image Filtering
 # Filter the Images as preprocessing
@@ -218,21 +227,12 @@ irca_test_fold3 = irca_all[10:15]
 irca_train_fold3 = irca_all[:10]
 
 
+dataset_irca = [irca_train_fold1, irca_test_fold1,\
+		   irca_train_fold2, irca_test_fold2,\
+		   irca_train_fold3, irca_test_fold3]
 
-### 4 Fold
-# irca_test_fold1 = irca_all[:5]
-# irca_train_fold1 = irca_all[5:]
-# irca_test_fold2 = irca_all[5:10]
-# irca_train_fold2 = irca_all[:5] + irca_all[10:]
-# irca_test_fold3 = irca_all[10:15]
-# irca_train_fold3 = irca_all[:10] + irca_all[15:]
-# irca_test_fold4 = irca_all[15:]
-# irca_train_fold4 = irca_all[:15]
-
+dataset_fire3 = [train_set, validation_set]
 
 
 # Select dataset
-dataset = [irca_train_fold1, irca_test_fold1,\
-		irca_train_fold2, irca_test_fold2,\
-		irca_train_fold3, irca_test_fold3]
-
+dataset = dataset_fire3
