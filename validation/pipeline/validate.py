@@ -3,6 +3,12 @@ Created on May 11, 2016
 
 @author: Mohamed.Ezz
 '''
+
+#add relevant directory to pythonpath
+import os, sys
+sys.path.insert(1,os.path.abspath('../../'))
+
+
 from config import Pipeline
 import validation.pipeline.validation_task
 
@@ -69,8 +75,8 @@ if __name__ == '__main__':
 	
 	# Reporter now saves all metrics to disk
 	if Pipeline.Reporter_save_to_disk:
-		print "==== Reporter.save ===="
-		reporter.save(Pipeline.Reporter_save_directory)
+		print "==== Reporter.save_all ===="
+		reporter.save_all(Pipeline.Reporter_save_directory)
 	
 	
 	
