@@ -295,5 +295,6 @@ class Surface(object):
         # create an erode version of the array
         erode_array = scipy.ndimage.morphology.binary_erosion(array, footprint)
 
+
         # xor the erode_array with the original and return
         return array ^ erode_array

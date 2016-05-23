@@ -3,6 +3,8 @@ import logging
 # Number of CPUs used for parallel processing
 #N_PROC = 14
 
+outfile = 'output.txt'
+
 # Image/Seg shape
 slice_shape = (388,388)
 

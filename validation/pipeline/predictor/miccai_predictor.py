@@ -82,7 +82,8 @@ class myPredictor(PredictorTask):
 		self.cascade = 1
 
 	def updatenet(self,fold,cascade):
-		if not fold == self.fold or not cascade == self.cascade:
+		if fold != self.fold or cascade != self.cascade:
+			print "Updating network"
 			if cascade == 1:
 				netparams = miccai_config.deployprototxt[fold-1],miccai_config.models[fold-1],caffe.TEST
 			elif cascade == 2:
@@ -94,17 +95,16 @@ class myPredictor(PredictorTask):
 				del self.net
 				self.net=caffe.Net(*netparams)
 				self.fold = fold
+				self.cascade = cascade
 			except NameError:
 				self.net=caffe.Net(*netparams)
 				self.fold = fold
+				self.cascade = cascade
 
 
 	def run(self, volumes):
-		print len(volumes)
-		print volumes[0].shape
-		print volumes[1].shape
-		print volumes[2].shape
-		return [np.random.random((5,5)) , np.random.random((6,6))]
+
+		
 		fold = volumes[0]
 		voxelspacing = volumes[1]
 		imgvol_downscaled = volumes[2]
@@ -112,13 +112,13 @@ class myPredictor(PredictorTask):
 
 
 		#the raw probabilites of step 1
-		probvol = np.zeros((config.slice_shape[0],config.slice_shape[1],imgvol.shape[2],2))
+		probvol = np.zeros((miccai_config.slice_shape[0],miccai_config.slice_shape[1],imgvol_downscaled.shape[2],2))
 		#the probabilites of step 2 scaled back down into the volume
-		pred_step_two = np.zeros((config.slice_shape[0],config.slice_shape[1],imgvol.shape[2]))
-		probvol_step_two = np.zeros((config.slice_shape[0],config.slice_shape[1],imgvol.shape[2],2))
+		pred_step_two = np.zeros((miccai_config.slice_shape[0],miccai_config.slice_shape[1],imgvol_downscaled.shape[2]))
+		probvol_step_two = np.zeros((miccai_config.slice_shape[0],miccai_config.slice_shape[1],imgvol_downscaled.shape[2],2))
 
 
-
+		print "Running Step 1"
 
 		self.updatenet(fold=fold,cascade=1)
 
@@ -137,6 +137,8 @@ class myPredictor(PredictorTask):
 			#result shape is batch_img_idx , height, width, probability_of_class
 
 
+		print "Running CRF"
+
 		crfparams = {'max_iterations': 10 ,'dynamic_z': True ,'ignore_memory': True ,'pos_x_std': 1.5 ,'pos_y_std': 1.5,
 'pos_z_std': 1.5,'pos_w': 3.0 ,'bilateral_x_std': 9.0,'bilateral_y_std': 9.0,
 'bilateral_z_std': 9.0,'bilateral_intensity_std': 20.0,'bilateral_w': 10.0}
@@ -147,6 +149,7 @@ class myPredictor(PredictorTask):
 
 		#Now let's get to the second step.
 
+		print "Running Step 2"
 		self.updatenet(fold=fold,cascade=2)
 
 		#we again iterate over all slices in the volume
@@ -171,7 +174,7 @@ class myPredictor(PredictorTask):
 				toppad, bottompad = y1, 388-y2
 				width, height = int(x2-x1), int(y2-y1)
 				#now save probabilities
-				prob = net.blobs['prob'].data.transpose((0,2,3,1))[0]
+				prob = self.net.blobs['prob'].data.transpose((0,2,3,1))[0]
 # 						probvol[:,:,i,:]  = prob
 
 				slc_pred_step_two = np.argmax(prob,axis=2).astype(SEG_DTYPE)
