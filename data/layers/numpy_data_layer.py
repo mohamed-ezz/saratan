@@ -12,7 +12,7 @@ import sys, os, time, random, shutil
 import numpy as np
 import lmdb, caffe, nibabel
 from multiprocessing import Pool, Process, Queue
-from Queue import Empty
+from Queue import Empty, Full
 import scipy.misc, scipy.ndimage.interpolation
 from tqdm import tqdm 
 import plyvel
@@ -27,6 +27,14 @@ from skimage.transform import PiecewiseAffineTransform, warp
 IMG_DTYPE = np.float
 SEG_DTYPE = np.uint8
 
+#Prefetching queue
+MAX_QUEUE_SIZE = 1000
+PREFETCH_BATCH_SIZE = 100
+
+
+def maybe_true(probability=0.5):
+	rnd = random.random()
+	return rnd <= probability
 
 def to_scale(img, shape=None):
 	if shape is None:
@@ -206,12 +214,16 @@ class processors:
 		return img,seg
 	
 	@staticmethod
+	def remove_non_liver(img, seg):
+		# Remove background !
+		img = np.multiply(img,np.clip(seg,0,1))
+		return img, seg
+	
+	@staticmethod
 	def zoomliver_UNET_processor(img, seg):
 		""" Custom preprocessing of img,seg for UNET architecture:
 		Crops the background and upsamples the found patch."""
 		
-		# Remove background !
-		img = np.multiply(img,np.clip(seg,0,1))
 		# get patch size
 		col_maxes = np.max(seg, axis=0) # a row
 		row_maxes = np.max(seg, axis=1)# a column
@@ -223,10 +235,15 @@ class processors:
 		y1, y2 = nonzero_rowmaxes[0], nonzero_rowmaxes[-1]
 		width = x2-x1
 		height= y2-y1
-		MIN_WIDTH = 150
-		MIN_HEIGHT= 150
+		MIN_WIDTH = 60
+		MIN_HEIGHT= 60
 		x_pad = (MIN_WIDTH - width) / 2.0 if width < MIN_WIDTH else 0
 		y_pad = (MIN_HEIGHT - height)/2.0 if height < MIN_HEIGHT else 0
+		
+		# Additional padding to make sure boundary lesions are included
+		SAFETY_PAD = 15
+		x_pad += SAFETY_PAD
+		y_pad += SAFETY_PAD
 		
 		x1 = max(0, x1-x_pad)
 		x2 = min(img.shape[1], x2+x_pad)
@@ -263,14 +280,13 @@ class NumpyDataLayer(caffe.Layer):
 		self.top_names = ['data', 'label']
 		
 		self.batch_size = 1
-		self.n_volumes = len(self.dataset)
 		self.img_volumes = [] # list of numpy volumes
 		self.seg_volumes = [] # list of numpy label volumes
 		
 		self.n_slices = 0 # number of slices in each volume
 		self.n_volumes= 0 # number of volumes in dataset
 		self.n_augmentations = config.augmentation_factor #number of possible augmentations
-		self.queue = Queue()
+		self.queue = Queue(MAX_QUEUE_SIZE)
 		
 		for vol_id, img_path, seg_path in self.dataset :
 			# shape initially is like 512,512,129
@@ -296,7 +312,10 @@ class NumpyDataLayer(caffe.Layer):
 		np.random.seed(123)
 		# Put first input into queue
 		child_seed = np.random.randint(0,9000)
-		self.p = Process(target = self.get_next_slice, args=(child_seed,))
+		# The child_seed is a randomly generated seed and it is needed because
+		# without it, every newly created process will be identical and will generate
+		# the same sequence of random numbers
+		self.p = Process(target = self.prepare_next_batch, args=(child_seed,))
 		self.p.start()
 		
 		import atexit
@@ -315,32 +334,41 @@ class NumpyDataLayer(caffe.Layer):
 	def forward(self, bottom, top):
 		while True:
 			try:
-				img, seg = self.queue.get(timeout=5)
+				img, seg = self.queue.get(timeout=1)
 				break
 			except Empty: #If queue is empty for any reason, must get_next_slice now
-				print "NumpyDataLayer.forward() : Queue was empty"
-				child_seed = np.random.randint(0,9000)
-				self.p = Process(target = self.get_next_slice, args=(child_seed,))
-				self.p.start()
+				# Make sure that there is no self.p currently running 
+				if not self.p.is_alive():
+					# be 100% sure to terminate self.p
+					self.p.join()
+					print "forward(): Queue was empty. Spawing prefetcher and retrying"
+					child_seed = np.random.randint(0,9000)
+					self.p = Process(target = self.prepare_next_batch, args=(child_seed,))
+					self.p.start()
 			
 		top[0].data[0,...] = img
 		top[1].data[0,...] = seg
 		
-		self.p.join()
+		#self.p.join()
 		
-		child_seed = np.random.randint(0,9000)
+		#child_seed = np.random.randint(0,9000)
 		#self.pool_result = self.ppool.apply_async(self, args=(child_seed,))
 		#self.pool_result.get()
-		self.p = Process(target = self.get_next_slice, args=(child_seed,))
-		self.p.start()
+		#self.p = Process(target = self.prepare_next_batch, args=(child_seed,))
+		#self.p.start()
 		
 	def backward(self, top, propagate_down, bottom):
 		pass
 
 		
-	def get_next_slice(self, seed):
-		""" Randomly pick a next slice and push it to the shared queue """
+	def prepare_next_batch(self, seed):
 		np.random.seed(seed)
+		for _ in range(PREFETCH_BATCH_SIZE):
+			self.get_next_slice()
+		
+	
+	def get_next_slice(self):
+		""" Randomly pick a next slice and push it to the shared queue """
 		while True:
 			# Pick random slice and augmentation
 			# Doing it this way, each volume has equal probability of being selected regardless of 
@@ -355,18 +383,29 @@ class NumpyDataLayer(caffe.Layer):
 			img = self.img_volumes[vol_idx][slice_idx] 
 			seg = self.seg_volumes[vol_idx][slice_idx]
 			
+			#print vol_idx, slice_idx, aug_idx
 			# Only break if we found a relevant slice
 			if self.is_relevant_slice(seg):
 				break
 		
 		img, seg = self.prepare_slice(img, seg, aug_idx)
 		
-		self.queue.put((img, seg))
+		try:
+			self.queue.put((img, seg))
+		except Full:
+			pass
 		
 	def is_relevant_slice(self, slc):
-		""" Checks whether a given slice is relevant, according to rule specified in config.select_slices (e.g., lesion-only)"""
+		""" Checks whether a given segmentation slice is relevant, according to rule specified in config.select_slices (e.g., lesion-only)"""
 		
+		# We increase small livers by rejecting non-small liver slices more frequently
+		if config.more_small_livers:
+			n_liver = 1.0 * np.sum(slc > 0)
+			if (100*n_liver/slc.size) > config.small_liver_percent: # NOT small liver
+				return maybe_true(0.7)
+				
 		if config.select_slices == "all":
+			# Reject half of the slices that has no liver/lesion
 			return True
 		
 		max = np.max(slc)
@@ -394,7 +433,6 @@ class NumpyDataLayer(caffe.Layer):
 	def augment_slice(self, img, seg, aug_idx):
 		
 		aug_func = [augmentation.identity,
-					augmentation.noise,
 					augmentation.crop_lb,
 					augmentation.crop_rt,
 					augmentation.crop_c,
@@ -404,6 +442,7 @@ class NumpyDataLayer(caffe.Layer):
 					augmentation.get_shift_down,
 					augmentation.get_shift_left,
 					augmentation.get_shift_right]
+					#augmentation.noise
 
 		#Invoke the selected augmentation function
 		img, seg = aug_func[aug_idx](img, seg)		

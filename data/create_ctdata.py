@@ -15,8 +15,7 @@ sys.path.append('/data/ID39-UNET-allslices-bilateral-filter/saratan')
 
 from saratan_utils import norm_hounsfield_dyn, norm_hounsfield_stat
 
-## Deformation Augmentation
-from skimage.transform import PiecewiseAffineTransform, warp
+
 
 ## Add Image Filtering
 import cv2
@@ -58,34 +57,6 @@ def get_shift(img, seg, x, y):
 		img = np.append(img[:,-y:], img[:,:-y], axis=1)
 		seg = np.append(seg[:,-y:], seg[:,:-y], axis=1)
 	return img, seg
-	
-def pad(img, pad_type, shape):
-	""" Pads the given image to reach the desired shape.
-	pad_type: 
-	'lt': left top
-	'rt': right top
-	'lb': left bottom
-	'rb': right bottom"""
-	if shape is None:
-		shape = config.slice_shape
-	
-	assert img.shape[0] <= shape[0], "Given img shape for padding: "+str(img.shape)+" longer than desired shape: "+str(shape)
-	assert img.shape[1] <= shape[1], "Given img shape for padding: "+str(img.shape)+" longer than desired shape: "+str(shape)
-	assert pad_type in ['lt','rt','lb','rb']
-	y_pad, x_pad = shape[0] - img.shape[0], shape[1] - img.shape[1]
-	
-	before_y, after_y, before_x, after_x = 0,0,0,0
-	if pad_type[0] == 'l': #left
-		before_x = x_pad
-	elif pad_type[0] == 'r':
-		after_x = x_pad
-	
-	if pad_type[1] == 't': #top
-		before_y = y_pad
-	elif pad_type[1] == 'b':
-		after_y = y_pad
-	
-	return np.pad(img, ((before_y, after_y),(before_x,after_x)), mode='constant')
 	
 	
 def crop(img, seg, crop_type, frac=0.95):
@@ -234,17 +205,19 @@ def augment(img, seg, factor=None, augment_small_liver = None):
 			break
 
 		if augment_small_liver:
-				liver_percent = 100.0*np.count_nonzero(seg==1) / seg.size
-				if liver_percent < 2.5: #if liver is less than 2.5% of whole image.
-						# 2 random rotations
-						for _ in range(2):
+				print seg.size
+				liver_percent = 100.0*np.count_nonzero(seg==1) / (seg.size+1)
+				if liver_percent < config.small_liver_percent: #if liver is less than 2.5% of whole image.
+						# random rotations
+						for _ in range(3):
 								rand = random.randrange(-10,10)
 								img_, seg_ = rotate(img, rand), rotate(seg, rand)
 								imgs.append(img_);segs.append(seg_)
-						# 2 random shifts
-						for _ in range(2):
-								rand1 = random.randrange(1,20)
-								rand2 = random.randrange(1,20)
+
+						# random shifts
+						for _ in range(3):
+								rand1 = random.randrange(0,20)
+								rand2 = random.randrange(0,20)
 								img_, seg_ = get_shift(img, seg, -int(width/rand1), int(height/rand2))
 								imgs.append(img_);segs.append(seg_)
 
@@ -271,6 +244,10 @@ def create_lmdb_keys(uid_sliceidx):
 
 def is_relevant_slice(slc):
 	""" Checks whether a given slice is relevant, according to rule specified in config.select_slices (e.g., lesion-only)"""
+	
+	if config.select_slices == "all":
+		return True
+	
 	max = np.max(slc)
 	if hasattr( config,'irrelevant_slice_include_prob'):
 		return random.randrange(100) < config.irrelevant_slice_include_prob
@@ -290,7 +267,7 @@ def histeq_processor(img, seg):
 	nbr_bins=256
 	#get image histogram
 	imhist,bins = np.histogram(img.flatten(),nbr_bins,normed=True)
-	cdf = imhist.cumsum() #cumulative distribution function
+	cdf = imhist.cumsum() #cumulative distribution function (sorted)
 	cdf = 255 * cdf / cdf[-1] #normalize
 	#use linear interpolation of cdf to find new pixel values
 	original_shape = img.shape

@@ -10,7 +10,7 @@ according to cmd arguments
 # Add project to search path
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import lutils
+import saratan_utils
 
 
 from tqdm import tqdm, trange
@@ -40,14 +40,14 @@ def visualize_img_seg(dbimg, dbseg, outdir, N_start=0, N=40, with_raw_img=False)
 		except StopIteration:
 			break 
 		
-		img = lutils.to_numpy_matrix(vimg)
-		seg = lutils.to_numpy_matrix(vseg)
+		img = saratan_utils.to_numpy_matrix(vimg)
+		seg = saratan_utils.to_numpy_matrix(vseg)
 		#Print histogram of labels
 		#print np.where(seg==0)[0].shape, np.where(seg==1)[0].shape, np.where(seg==2)[0].shape
 		
 		assert img.shape == seg.shape, "Image and Label have different dimensions: %s and %s resp." % (str(img.shape),str(seg.shape))
 		# Denormalize image values
-		img = lutils.denormalize_img_255(img)
+		img = saratan_utils.denormalize_img_255(img)
 		
 		#Convert to Color image (add a channel)
 		img = np.expand_dims(img, 2)
