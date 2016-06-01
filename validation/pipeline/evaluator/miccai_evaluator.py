@@ -40,7 +40,7 @@ class myEvaluator(EvaluatorTask):
 		label = label.astype(int)
 
 
-		return [fold,get_scores(any(pred==1,pred==2),any(label==1,label==2),vxlspacing),get_scores(pred==2,label==2,vxlspacing)]
+		return [fold,get_scores(pred==1,label==1,vxlspacing),get_scores(pred==2,label==2,vxlspacing)]
 
 	def save(self, directory):
 		print "Saving myEvaluator to ",directory
