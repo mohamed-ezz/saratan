@@ -14,7 +14,7 @@ HOST is the IP of the machine to deploy on.
 Command to run the container and verify GPU is working (it will run nvidia-smi) :
 fab run_deepliver -A -H username@HOST -p <password for username>
 
-Example : fab setup_deepliver -A -H mohamedezz@10.162.254.76 -p mysecretpassword
+Example : fab setup_container -A -H mohamedezz@10.162.254.76 -p mysecretpassword
 
 Note : The option -A passes over your ssh identity (private key), so that you can pull our private repos from bitbucket. This requires that you register your private key to be used by the ssh forwarding agent. Do this :
 
