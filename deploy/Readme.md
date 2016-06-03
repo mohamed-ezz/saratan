@@ -38,3 +38,17 @@ for convenience :
 `caffecontainer` : Use this to create a temporary caffe container.  
 
 Both alias commands will mount the current directory from which you run the alias, to /data in the container. Note that those aliases will delete the created container after they exit, so it's a good practice to put any output data in the mounted directory /data, because any data outside this mount is gone when the container is deleted.
+
+### Lasagne Docker ###
+Can be pulled from Dockerhub
+`docker pull fletling/lasagne`
+
+or be built with 
+`docker build -t fletling/lasagne .`
+from the directory of the Dockerfile
+
+Then use it similar to caffecontainer and add alias for simplicity
+`alias lasagnecont='sudo GPU=0 nvidia-docker run -v /home/username:/data -p 8888:8888 --net=host --privileged -w /data -ti fletling/lasagne bash'`
+
+
+
