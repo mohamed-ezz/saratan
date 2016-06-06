@@ -24,6 +24,13 @@ e.g. : `ssh-add ~/.ssh/id_rsa`
 
 Note for first-time-usage: Make sure that '~/.ssh/known_hosts' exists on the HOST machine. Otherwise you might get a runtime error.
 
+##Add User to Docker Group
+You need to add your current user to docker group as follow :
+`sudo usermod -aG docker <user>`
+then logout & login again into the system or restart the system. test by:
+`docker run hello-world`
+
+
 ##Docker Containers Usage
 To easily use the docker containers on the machine they're deployed on, you can add the following aliases in your ~/.bashrc
 for convenience :
