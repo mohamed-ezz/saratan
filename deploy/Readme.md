@@ -36,9 +36,7 @@ To easily use the docker containers on the machine they're deployed on, you can 
 for convenience :
 `alias trainhere='sudo GPU=0 nvidia-docker run -v $(pwd):/data -w /data -ti mohamedezz/jonlong bash -c "caffe train -solver solver_deepliver.prototxt" && sudo docker rm $(sudo docker ps -l -q)'
 
-`alias caffecont='sudo GPU=0 nvidia-docker run -v /home/mohamedezz:/data -p 8888:8888 --net=host --privileged -w /data -ti mohamedezz/jonlong bash'`
-
-`alias jupytercont='sudo GPU=0 nvidia-docker run -v /home/mohamedezz:/data -p 8888:8888 --net=host --privileged -w /data mohamedezz/jonlong bash -c "jupyter notebook"'`
+alias caffecontainer='sudo GPU=0 nvidia-docker run -v /mnt:/mnt -v /media/nas:/media/nas -v $(pwd):/data -P --net=host --workdir=/data -ti --privileged mohamedezz/caffe bash'
 
 `trainhere` : To use it, first cd into a directory which contains a file solver_deepliver.prototxt and the corresponding  network prototxts and a 2 leveldbs named train_img and train_seg (images and their segmentations).
 
