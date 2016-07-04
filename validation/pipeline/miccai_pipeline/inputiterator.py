@@ -1,5 +1,5 @@
-from validation.pipeline.validation_task import *
-import validation.pipeline.miccai_config as miccai_config
+from validation.pipeline.validation_task import InputIteratorTask
+import config as miccai_config
 import numpy as np
 
 

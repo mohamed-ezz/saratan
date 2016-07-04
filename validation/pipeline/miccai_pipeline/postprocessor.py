@@ -1,4 +1,4 @@
-from validation.pipeline.validation_task import *
+from validation.pipeline.validation_task import PostprocessorTask
 import numpy as np
 
 

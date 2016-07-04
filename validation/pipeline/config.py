@@ -17,8 +17,8 @@ Reporter		-- aggregates and writes metrics of different inputs into some report 
 How to use the validation framework :
 1- Create classes for all 6 tasks. Each of your classes inherit from one of the *Task classes in validation_task.py
 	- For an example of these classes, look at saratan/validation/pipeline/example.py
-2- Edit this config file so that Pipeline.InputIterator points to your inputIterator task class, and same for the other tasks
-3- You task classes must implement the run method and optionally the save method
+2- Edit this config file so that Pipeline.InputIterator points to your inputIterator task "class", and same for the other tasks
+3- Your task classes must implement the run method and optionally the save method
 5- Run python saratan/validation/pipeline/validate.py
 
 Notes:
@@ -35,7 +35,7 @@ Notes:
 3- You can save the intermediate results by setting [taskname]_save_to_disk=True in this config file.
 	but then the task must implement the save method
 4- As a convention, each task class should be defined in a separate file located in the respective directory
-	under saratan/validate/pipeline/{inputiterator or preprocessor or ....}
+	under saratan/validate/pipeline/yourPipelineName/{inputiterator.py or preprocessor.py or....etc}
 5- The code controlling the flow of the pipeline is in saratan/validation/pipeline/validate.py
 '''
 
@@ -43,12 +43,12 @@ Notes:
 #from validation.pipeline.example import *
 
 
-from validation.pipeline.evaluator.miccai_evaluator import *
-from validation.pipeline.inputiterator.miccai_inputiterator import *
-from validation.pipeline.postprocessor.miccai_postprocessor import *
-from validation.pipeline.predictor.miccai_predictor import *
-from validation.pipeline.preprocessor.miccai_preprocessor import *
-from validation.pipeline.reporter.miccai_reporter import *
+from miccai_pipeline.inputiterator import myInputIterator
+from miccai_pipeline.preprocessor import myPreprocessor
+from miccai_pipeline.predictor import myPredictor
+from miccai_pipeline.postprocessor import myPostprocessor
+from miccai_pipeline.reporter import myReporter
+from miccai_pipeline.evaluator import myEvaluator
 
 class Pipeline:
 	""" Controls the flow of the pipeline """

@@ -1,4 +1,4 @@
-from validation.pipeline.validation_task import *
+from validation.pipeline.validation_task import EvaluatorTask
 from medpy import metric
 from surface import Surface
 
