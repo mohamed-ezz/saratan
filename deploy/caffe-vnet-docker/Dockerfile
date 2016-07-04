@@ -62,7 +62,7 @@ RUN cd /opt && git clone https://github.com/faustomilletari/3D-Caffe.git caffe &
 #RUN cd /opt && git clone https://github.com/BVLC/caffe.git caffe && cd /opt/caffe
 
 #Clone Faustos VNET Project
-RUN cd /opt/ && git clone https://github.com/faustomilletari/VNet.git vnet
+RUN cd /opt/ && git clone https://github.com/patrickchrist/VNet.git vnet
 
 
 # Clone and Install 3D DenseCRF
