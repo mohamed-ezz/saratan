@@ -1,4 +1,4 @@
-## Saratan ##
+## Saratan (Arabic : سرطان)##
 
 This is a newer version of caffe-tools repository. It replaces both caffe-tools and caffe-helper repos.
 It contains the code used for the paper `Automatic Liver and Lesion Segmentation in CT Using Cascaded Fully Convolutional Neural Networks and 3D Conditional Random Fields`
