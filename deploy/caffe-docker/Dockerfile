@@ -41,6 +41,8 @@ wget \
 vim \
 htop \
 sshfs \
+tmux \
+graphviz \
 cifs-utils
 
 
@@ -57,7 +59,9 @@ ldconfig
 
 
 # Clone my own branch with the CLASS WEIGHTING feature + Weigh_prediction_class option
-RUN cd /opt && git clone -b master https://github.com/mohamed-ezz/caffe.git caffe && cd /opt/caffe
+#RUN cd /opt && git clone -b master https://github.com/mohamed-ezz/caffe.git caffe && cd /opt/caffe
+# Clone my own branch with the CLASS WEIGHTING feature + Weigh_prediction_class option
+RUN cd /opt && git clone -b jonlong https://github.com/mohamed-ezz/caffe.git caffe && cd /opt/caffe
 # Clone and Install 3D DenseCRF
 RUN cd /opt && git clone -b master https://IBBM_Ops:kfh7jibbmh3e8q95fqv5dx5q@bitbucket.org/patrickchrist/denseinferencewrapper.git denseinferencewrapper
 # Build and install 3D DesneCRF
@@ -71,7 +75,7 @@ ENV PYTHONPATH /opt/caffe/python:/opt/saratan/:/opt/saratan/data/layers
 RUN cd  /opt/caffe/python && \
 for req in $(cat requirements.txt); do sudo pip install $req; done
 # Instal pip packages used by various scripts, and useful for interactive dev
-RUN sudo pip install pydicom lmdb cv2 jupyter plyvel peewee nibabel tqdm pypng natsort medpy psutil
+RUN sudo pip install pydicom lmdb jupyter plyvel peewee nibabel tqdm pypng natsort medpy psutil pydot
 RUN pip install --allow-insecure www.simpleitk.org -f http://www.simpleitk.org/SimpleITK/resources/software.html --timeout 30 SimpleITK
 # Install NLopt
 RUN cd /opt/ && wget http://ab-initio.mit.edu/nlopt/nlopt-2.4.2.tar.gz && tar -xvf nlopt-2.4.2.tar.gz && rm nlopt-2.4.2.tar.gz

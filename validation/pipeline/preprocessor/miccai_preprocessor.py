@@ -5,6 +5,7 @@ import numpy as np
 
 import nibabel as nib
 import scipy
+import scipy.misc
 
 
 IMG_DTYPE = np.float
@@ -38,7 +39,7 @@ def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
 
 def to_scale(img, shape=None):
 	if shape is None:
-		shape = miccai_miccai_config.slice_shape
+		shape = miccai_config.slice_shape
 
 	height, width = shape
 	if img.dtype == SEG_DTYPE:
@@ -81,7 +82,6 @@ def downscale_img_label(imgvol,label_vol):
 	# Copy image volume
 	#copy_imgvol = np.copy(imgvol)
 	#Truncate metal and high absorbative objects
-	print 'Found'+str(np.sum(imgvol>1200))+'values > 1200 !!'
 	imgvol[imgvol>1200] = 0
 
 	for i in range(imgvol.shape[2]):
@@ -109,15 +109,19 @@ class myPreprocessor(PreprocessorTask):
 		#input is e.g. [1, (303, '/data/niftis_segmented/image03.nii', '/data/niftis_segmented/label03.nii', [0.62, 0.62, 1.25])]
 
 		fold = input_tuple[0]
-		voxelspacing = input_tuple[1][3]
+		if len(input_tuple[1]) >= 4:
+			voxelspacing = input_tuple[1][3]
+		else:
+			voxelspacing = [1, 1, 1]
 
 		imgvol = nib.load(input_tuple[1][1]).get_data()
 		labelvol = nib.load(input_tuple[1][2]).get_data()
 
+		
 		#turn 90 deg so that the network will see the images in the same orientation like during training
 		imgvol = np.rot90(imgvol)
 		labelvol = np.rot90(labelvol)
-
+		
 		imgvol_downscaled, labelvol_downscaled = downscale_img_label(imgvol,labelvol)
 
 		return [fold,voxelspacing,imgvol_downscaled,labelvol_downscaled]

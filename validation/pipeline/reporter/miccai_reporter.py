@@ -9,16 +9,17 @@ import numpy as np
 
 class myReporter(ReporterTask):
 
-	#volumeid, fold, scores
-	results = []
+	def __init__(self):
+		self.results = []
 
-	def run(self, input_tuple, volumes):
-		self.results.append([input_tuple[1][0],volumes[0],volumes[1], volumes[2]])
-		print volumes
+	def run(self, input_tuple, foldidx_scores):
+		foldidx, liver_scores, lesion_scores = foldidx_scores
+		volume_id = input_tuple[1][0]
+		self.results.append([volume_id, foldidx, liver_scores, lesion_scores])
 
 		#create line for csv file
-		outstr = str(input_tuple[1][0]) + ',' + str(volumes[0]) + ','
-		for l in [volumes[1],volumes[2]]:
+		outstr = str(volume_id) + ',' + str(foldidx) + ','
+		for l in [liver_scores, lesion_scores]:
 			for k,v in l.iteritems():
 				outstr += str(v) + ','
 		outstr += '\n'
@@ -26,10 +27,10 @@ class myReporter(ReporterTask):
 		#create header for csv file if necessary
 		if not os.path.isfile(miccai_config.outfile):
 			headerstr = 'VolumeID,Fold,'
-			for k,v in volumes[1].iteritems():
-				headerstr += 'Liver ' + k + ','
-			for k,v in volumes[1].iteritems():
-				headerstr += 'Lesion ' + k + ','
+			for k,v in liver_scores.iteritems():
+				headerstr += 'Liver_' + k + ','
+			for k,v in liver_scores.iteritems():
+				headerstr += 'Lesion_' + k + ','
 
 			headerstr += '\n'
 			outstr = headerstr + outstr
@@ -39,7 +40,3 @@ class myReporter(ReporterTask):
 		f.write(outstr)
 		f.close()
 
-		print self.results
-
-	def save_all(self, directory):
-		print "Saving report to ",directory

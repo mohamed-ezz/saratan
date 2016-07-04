@@ -7,7 +7,7 @@ Created on May 11, 2016
 #add relevant directory to pythonpath
 import os, sys
 sys.path.insert(1,os.path.abspath('../../'))
-
+import logging
 
 from config import Pipeline
 import validation.pipeline.validation_task
@@ -32,8 +32,12 @@ def check_pipeline_config():
 		"Pipeline.Reporter must be a subclass of validation_task.ReporterTask"
 		
 if __name__ == '__main__':
-	
+	logging.basicConfig(level=logging.DEBUG)
+	# Perform some sanity checks
 	check_pipeline_config()
+	
+	n_fails = 0
+	n_succeeds = 0
 	
 	input_iterator = Pipeline.InputIterator()
 	preprocessor   = Pipeline.Preprocessor()
@@ -42,41 +46,50 @@ if __name__ == '__main__':
 	evaluator      = Pipeline.Evaluator()
 	reporter       = Pipeline.Reporter()
 	
+	index = 0
+	total = len(input_iterator)
 	for input_tuple in input_iterator.run():
-		print "Input received from InputIterator"
-		
-		print "==== Preprocessor.run ===="
-		preprocessor_output  = preprocessor.run(input_tuple)
-		if Pipeline.Preprocessor_save_to_disk:
-			print "==== Preprocessor.save ===="
-			preprocessor.save(Pipeline.Predictor_save_directory)
+		index += 1
+		try:
+			progress_str = "(" + str(index)+ " / " + str(total) + ")"
+			print "Input received from InputIterator"
 			
-		print "==== Predictor.run ===="
-		predictor_output     = predictor.run(preprocessor_output)
-		if Pipeline.Predictor_save_to_disk:
-			print "==== Predictor.save ===="
-			predictor.save(Pipeline.Predictor_save_directory)
-		
-		print "==== Postprocessor.run ===="
-		postprocessor_output = postprocessor.run(predictor_output)
-		if Pipeline.Postprocessor_save_to_disk:
-			print "==== Postprocessor.save ===="
-			postprocessor.save(Pipeline.Postprocessor_save_directory)
-		
-		print "==== Evaluator.run ===="
-		evaluator_output     = evaluator.run(postprocessor_output)
-		if Pipeline.Evaluator_save_to_disk:
-			print "==== Evaluator.save ===="
-			evaluator.save(Pipeline.Evaluator_save_directory)
-		
-		print "==== Reporter.run ===="
-		# Reporter should now save the metrics in evaluator_output
-		reporter_output = reporter.run(input_tuple, evaluator_output)
-	
-	# Reporter now saves all metrics to disk
-	if Pipeline.Reporter_save_to_disk:
-		print "==== Reporter.save_all ===="
-		reporter.save_all(Pipeline.Reporter_save_directory)
+			print "==== Preprocessor.run ====" + progress_str
+			preprocessor_output  = preprocessor.run(input_tuple)
+			if Pipeline.Preprocessor_save_to_disk:
+				print "==== Preprocessor.save ====" + progress_str
+				preprocessor.save(Pipeline.Predictor_save_directory)
+				
+			print "==== Predictor.run ====" + progress_str
+			predictor_output     = predictor.run(preprocessor_output)
+			if Pipeline.Predictor_save_to_disk:
+				print "==== Predictor.save ====" + progress_str
+				predictor.save(Pipeline.Predictor_save_directory)
+			
+			print "==== Postprocessor.run ====" + progress_str
+			postprocessor_output = postprocessor.run(predictor_output)
+			if Pipeline.Postprocessor_save_to_disk:
+				print "==== Postprocessor.save ====" + progress_str
+				postprocessor.save(Pipeline.Postprocessor_save_directory)
+			
+			print "==== Evaluator.run ====" + progress_str
+			evaluator_output     = evaluator.run(postprocessor_output)
+			if Pipeline.Evaluator_save_to_disk:
+				print "==== Evaluator.save ====" + progress_str
+				evaluator.save(Pipeline.Evaluator_save_directory)
+			
+			print "==== Reporter.run ====" + progress_str
+			# Reporter should now save the metrics in evaluator_output
+			reporter_output = reporter.run(input_tuple, evaluator_output)
+
+				
+			n_succeeds += 1
+		except:
+			n_fails += 1
+			logging.exception("Failed to process input : " + str(input_tuple))
+
+	n_total = n_fails + n_succeeds
+	logging.info("Validation is done : %i / %i failed." % (n_fails, n_total))
 	
 	
 	

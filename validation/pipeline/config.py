@@ -74,9 +74,7 @@ class Pipeline:
 	Evaluator_save_directory= 'evluator_output_directory'
 	
 	Reporter      = myReporter
-	Reporter_save_to_disk = True
 	Reporter_save_directory = 'report_output_directory'
-	
 
 
 

@@ -16,10 +16,13 @@ max_volumes = -1
 #  - processors.histeq_processor
 #  - processors.liveronly_label_processor
 from numpy_data_layer import processors
+processors_list = [processors.plain_UNET_processor]
 # Step 1
 #processors_list = [processors.histeq_processor, processors.plain_UNET_processor, processors.liveronly_label_processor]
+#processors_list = [processors.histeq_processor, processors.plain_UNET_processor][1:]
 # Step 2
-processors_list = [processors.remove_non_liver, processors.zoomliver_UNET_processor]
+#processors_list = [processors.remove_non_liver, processors.zoomliver_UNET_processor]
+#processors_list = [processors.histeq_processor]
 
 # Shuffle slices and their augmentations globally across the database
 # You might want to set to False if dataset = test_set
@@ -35,14 +38,38 @@ augmentation_factor = 10
 # liver-only:   Include only slices which are labeld with liver or lower (1 or 0)
 # lesion-only:  Include only slices which are labeled with lesion or lower (2, 1 or 0)
 # liver-lesion: Include only slices which are labeled with liver or lesion (slices with max=2 or with max=1)
-select_slices = "liver-lesion"
+select_slices = "all"
+#select_slices = 'liver-lesion'
 
 more_small_livers = False
 # Percentage of the image, such that any liver small than that is considered small
 small_liver_percent = 2
 
+decrease_empty_slices = 0.9
+
 # Base path of niftis and segmentation niftis
 BASE_PATH = "/media/nas/niftis_segmented"
+
+fire3_best = [\
+			# Liver quality and lesion quality both = 1
+			(92,BASE_PATH+"/CRF_118/2007-10-16/Sensation_16/segmented/17730001.npy",BASE_PATH+"/CRF_118/2007-10-16/Sensation_16/segmented/17730001_liv_x_clipped.npy"),
+			(90,BASE_PATH+"/CRF_141/2007-11-22/Sensation_16/segmented/20610001.npy",BASE_PATH+"/CRF_141/2007-11-22/Sensation_16/segmented/20610001_liv_x_clipped.npy"),
+			(33,BASE_PATH+"/CRF_223/2008-07-22/Sensation_16/segmented/3917859.npy",BASE_PATH+"/CRF_223/2008-07-22/Sensation_16/segmented/3917859_liv_x_clipped.npy"),
+			(35,BASE_PATH+"/CRF_223/2008-10-30/Sensation_16/segmented/3916383.npy",BASE_PATH+"/CRF_223/2008-10-30/Sensation_16/segmented/3916383_liv_x_clipped.npy"),
+			(87,BASE_PATH+"/CRF_224/2008-09-15/Sensation_16/segmented/30280001.npy",BASE_PATH+"/CRF_224/2008-09-15/Sensation_16/segmented/30280001_liv_x_clipped.npy"),
+			(86,BASE_PATH+"/CRF_242/2007-11-27/Sensation_40/segmented/31930001.npy",BASE_PATH+"/CRF_242/2007-11-27/Sensation_40/segmented/31930001_liv_x_clipped.npy"),
+			(73,BASE_PATH+"/CRF_381/2012-05-10/LightSpeed_Pro_32/segmented/3617077.npy",BASE_PATH+"/CRF_381/2012-05-10/LightSpeed_Pro_32/segmented/3617077_liv_x_clipped.npy"),
+			(74,BASE_PATH+"/CRF_381/2012-06-19/LightSpeed_Pro_32/segmented/3615449.npy",BASE_PATH+"/CRF_381/2012-06-19/LightSpeed_Pro_32/segmented/3615449_liv_x_clipped.npy"),
+			(68,BASE_PATH+"/CRF_490/2011-02-09/iCT_256/segmented/63630001.npy",BASE_PATH+"/CRF_490/2011-02-09/iCT_256/segmented/63630001_liv_x_clipped.npy"),
+			(38,BASE_PATH+"/CRF_710/2011-03-28/Discovery_STE/segmented/85070001.npy",BASE_PATH+"/CRF_710/2011-03-28/Discovery_STE/segmented/85070001_liv_1_clipped.npy"),
+			(39,BASE_PATH+"/CRF_710/2011-09-08/Emotion_6/segmented/84680001.npy",BASE_PATH+"/CRF_710/2011-09-08/Emotion_6/segmented/84680001_liv_1_clipped.npy"),
+			(99,BASE_PATH+"/CRF_799/2011-10-05/Sensation_16/segmented/115160001.npy",BASE_PATH+"/CRF_799/2011-10-05/Sensation_16/segmented/115160001_liv_x_clipped.npy"),
+			# Lesion quality = 2, liver quality = 1
+			(31,BASE_PATH+"/CRF_223/2008-02-05/Sensation_16/segmented/3920202.npy",BASE_PATH+"/CRF_223/2008-02-05/Sensation_16/segmented/3920202_liv_x_clipped.npy"),
+			(32,BASE_PATH+"/CRF_223/2008-04-29/Sensation_16/segmented/3911413.npy",BASE_PATH+"/CRF_223/2008-04-29/Sensation_16/segmented/3911413_liv_x_clipped.npy"),
+			(81,BASE_PATH+"/CRF_336/2012-11-01/Birlliance_10/segmented/3557811.npy",BASE_PATH+"/CRF_336/2012-11-01/Birlliance_10/segmented/3557811_liv_x_clipped.npy"),
+			(56,BASE_PATH+"/CRF_841/2013-01-24/SOMATOM_Definition_AS/segmented/200424.npy",BASE_PATH+"/CRF_841/2013-01-24/SOMATOM_Definition_AS/segmented/200424_liv_x_clipped.npy")
+			]
 
 fire3_test_set = [\
 (2,BASE_PATH+"/CRF_035/2008-05-20/Brilliance_64/segmented/02770001.npy",BASE_PATH+"/CRF_035/2008-05-20/Brilliance_64/segmented/02770001_liv_1_clipped.npy"),
@@ -180,9 +207,9 @@ irca_numpy_all = [\
 
 
 # Select network datasets
-#train_dataset = irca_numpy_all[:5]
-#test_dataset = irca_numpy_all[5:10]
+#train_dataset = irca_numpy_all[:10]
+#test_dataset = irca_numpy_all[10:]
 
-train_dataset = fire3_train_set
+train_dataset = fire3_best#fire3_train_set
 test_dataset = fire3_test_set
 

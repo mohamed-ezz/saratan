@@ -135,8 +135,13 @@ class myPredictor(PredictorTask):
 			probvol[:,:,i,:]  = self.net.blobs['prob'].data.transpose((0,2,3,1))[0]
 
 			#result shape is batch_img_idx , height, width, probability_of_class
-
-
+			
+		
+		#return [fold,voxelspacing, np.argmax(probvol, axis=3),labelvol_downscaled]
+	
+	
+	
+	
 		print "Running CRF"
 
 		crfparams = {'max_iterations': 10 ,'dynamic_z': True ,'ignore_memory': True ,'pos_x_std': 1.5 ,'pos_y_std': 1.5,
@@ -144,7 +149,7 @@ class myPredictor(PredictorTask):
 'bilateral_z_std': 9.0,'bilateral_intensity_std': 20.0,'bilateral_w': 10.0}
 		pro = CRFProcessor.CRF3DProcessor(**crfparams)
 
-		crf_pred_liver = pro.set_data_and_run(imgvol_downscaled, probvol)
+		crf_pred = pro.set_data_and_run(imgvol_downscaled, probvol)
 
 
 		#Now let's get to the second step.
@@ -157,7 +162,7 @@ class myPredictor(PredictorTask):
 			slc = imgvol_downscaled[:,:,i]
 
 			#now we crop and upscale the liver
-			slc_crf_pred_liver = crf_pred_liver[:, :, i].astype(SEG_DTYPE)
+			slc_crf_pred_liver = crf_pred[:, :, i].astype(SEG_DTYPE)
 
 			if np.count_nonzero(slc_crf_pred_liver) == 0:
 				probvol_step_two[:,:,i,:] = 0
@@ -186,10 +191,10 @@ class myPredictor(PredictorTask):
 
 		#merge pred_ste_two into the prediction from step 1
 
-		crf_pred_liver[pred_step_two==1] = 2
+		crf_pred[pred_step_two==1] = 2
 
 
-		return [fold,voxelspacing,crf_pred_liver,labelvol_downscaled]
+		return [fold,voxelspacing,crf_pred,labelvol_downscaled]
 
 
 

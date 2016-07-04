@@ -66,6 +66,7 @@ def norm_hounsfield_dyn(arr, c_min=0.1, c_max=0.3):
 	# normalization
 	norm_fac = np.amax(arr)
 	if norm_fac != 0:
+		#norm = (arr*255)/ norm_fac
 		norm = np.divide(
 				np.multiply(arr,255),
 			 	np.amax(arr))
@@ -237,13 +238,13 @@ class processors:
 		height= y2-y1
 		MIN_WIDTH = 60
 		MIN_HEIGHT= 60
-		x_pad = (MIN_WIDTH - width) / 2.0 if width < MIN_WIDTH else 0
-		y_pad = (MIN_HEIGHT - height)/2.0 if height < MIN_HEIGHT else 0
+		x_pad = int((MIN_WIDTH - width) / 2.0 if width < MIN_WIDTH else 0)
+		y_pad = int((MIN_HEIGHT - height)/2.0 if height < MIN_HEIGHT else 0)
 		
 		# Additional padding to make sure boundary lesions are included
-		SAFETY_PAD = 15
-		x_pad += SAFETY_PAD
-		y_pad += SAFETY_PAD
+		#SAFETY_PAD = 15
+		#x_pad += SAFETY_PAD
+		#y_pad += SAFETY_PAD
 		
 		x1 = max(0, x1-x_pad)
 		x2 = min(img.shape[1], x2+x_pad)
@@ -264,8 +265,7 @@ class processors:
 		#seg=np.pad(seg,((92,92),(92,92)),mode='reflect')
 		img=np.pad(img,92,mode='reflect')
 		return img, seg
-
-
+	
 
 
 import config
@@ -279,15 +279,14 @@ class NumpyDataLayer(caffe.Layer):
 		print "Setup NumpyDataLayer"
 		self.top_names = ['data', 'label']
 		
-		self.batch_size = 1
+		self.batch_size = 1 #current batch_size>1 is not implemented. but very simple to implement in the forward() function
 		self.img_volumes = [] # list of numpy volumes
 		self.seg_volumes = [] # list of numpy label volumes
 		
-		self.n_slices = 0 # number of slices in each volume
 		self.n_volumes= 0 # number of volumes in dataset
 		self.n_augmentations = config.augmentation_factor #number of possible augmentations
 		self.queue = Queue(MAX_QUEUE_SIZE)
-		
+		self.n_total_slices = 0		
 		for vol_id, img_path, seg_path in self.dataset :
 			# shape initially is like 512,512,129
 			imgvol = np.load(img_path,mmap_mode='r')
@@ -302,9 +301,10 @@ class NumpyDataLayer(caffe.Layer):
 			
 			assert imgvol.shape == segvol.shape, "Volume and segmentation have different shapes: %s vs. %s" % (str(imgvol.shape),str(segvol.shape))
 			
-			self.n_slices += imgvol.shape[0]
 			self.n_volumes+= 1
-			
+			self.n_total_slices += segvol.shape[0]
+		
+		print "Dataset has ", self.n_total_slices,"(before augmentation)"
 		top[0].reshape(1,1,572,572)
 		top[1].reshape(1,1,388,388)
 		
@@ -345,7 +345,7 @@ class NumpyDataLayer(caffe.Layer):
 					child_seed = np.random.randint(0,9000)
 					self.p = Process(target = self.prepare_next_batch, args=(child_seed,))
 					self.p.start()
-			
+		
 		top[0].data[0,...] = img
 		top[1].data[0,...] = seg
 		
@@ -404,9 +404,14 @@ class NumpyDataLayer(caffe.Layer):
 			if (100*n_liver/slc.size) > config.small_liver_percent: # NOT small liver
 				return maybe_true(0.7)
 				
+				
+		
 		if config.select_slices == "all":
 			# Reject half of the slices that has no liver/lesion
+			if np.count_nonzero(slc) == 0:
+				return maybe_true(0.3)
 			return True
+			
 		
 		max = np.max(slc)
 		if config.select_slices == "liver-lesion":
@@ -422,12 +427,11 @@ class NumpyDataLayer(caffe.Layer):
 		# Make sure 0 >= label >= 2
 		seg = np.clip(seg, 0, 2)
 		img = norm_hounsfield_dyn(img)
-		
 		img, seg = self.augment_slice(img, seg, aug_idx)
-		
 		for processor in config.processors_list:
 			img, seg = processor(img, seg)
-		
+		#img = to_scale(img, (400,400))
+        #seg = to_scale(seg, (400,400))
 		return img, seg
 
 	def augment_slice(self, img, seg, aug_idx):

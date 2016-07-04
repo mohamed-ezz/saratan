@@ -31,16 +31,16 @@ class myEvaluator(EvaluatorTask):
 	def run(self, volumes):
 
 		fold = volumes[0]
+		vxlspacing = volumes[1]
 		pred = volumes[2]
 		label = volumes[3]
-		vxlspacing = volumes[1]
 
 		#for some reason correct label and prediction dtypes got lost
 		pred = pred.astype(int)
 		label = label.astype(int)
 
 
-		return [fold,get_scores(pred==1,label==1,vxlspacing),get_scores(pred==2,label==2,vxlspacing)]
+		return [fold,get_scores(pred>=1,label>=1,vxlspacing),get_scores(pred==2,label==2,vxlspacing)]
 
 	def save(self, directory):
 		print "Saving myEvaluator to ",directory
