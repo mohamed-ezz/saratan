@@ -102,7 +102,8 @@ make pycaffe -j$(nproc)
 # Install caffe
 ENV PATH $PATH:/opt/caffe/.build_release/tools
 
-
+#Upgrade Numpy
+RUN sudo pip install numpy --upgrade
 
 
 EXPOSE 8888 8889 8890 8891 8892 8893 8894 8895 8896 8897 8898 8899 8900
