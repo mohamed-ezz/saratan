@@ -58,8 +58,8 @@ ldconfig
 
 # Clone Faustos 3D CAFFE
 
-#RUN cd /opt && git clone https://github.com/PatrickChrist/3D-Caffe.git caffe && cd /opt/caffe
-RUN cd /opt && git clone https://github.com/BVLC/caffe.git caffe && cd /opt/caffe
+RUN cd /opt && git clone https://github.com/PatrickChrist/3D-Caffe.git caffe && cd /opt/caffe
+#RUN cd /opt && git clone https://github.com/BVLC/caffe.git caffe && cd /opt/caffe
 
 #Clone Faustos VNET Project
 RUN cd /opt/ && git clone https://github.com/faustomilletari/VNet.git vnet
