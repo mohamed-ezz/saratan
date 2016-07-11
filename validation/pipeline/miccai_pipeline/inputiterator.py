@@ -3,7 +3,7 @@ import config as miccai_config
 import numpy as np
 
 
-class myInputIterator(InputIteratorTask):
+class miccaiInputIterator(InputIteratorTask):
 	def run(self):
 		print "Welcome to the MICCAI pipeline validation"
 

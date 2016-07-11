@@ -3,8 +3,8 @@ import logging
 # Number of CPUs used for parallel processing
 #N_PROC = 14
 
-outfile = 'output.txt'
-
+outdir = "/data/thesis_results/fire3_cfcn_crf_47"
+outfile = 'fire3_output_cfcn_crf.txt'
 # Image/Seg shape
 slice_shape = (388,388)
 
@@ -25,6 +25,11 @@ slice_shape = (388,388)
 ###########################
 ##### FIRE3 DATASET ######
 ###########################
+
+apply_histeq = False
+apply_liver_crf = True
+use_net2 = True #for CFCN
+net1_n_classes = 2
 
 FIRE3_BASE_PATH = "/media/nas/niftis_segmented"
 
@@ -50,12 +55,14 @@ fire3_validation_set = [\
 #(66,FIRE3_BASE_PATH+"/CRF_490/2010-08-16/iCT_256/segmented/63870001.nii",FIRE3_BASE_PATH+"/CRF_490/2010-08-16/iCT_256/segmented/63870001_liv_x_clipped.nii"),
 (92,FIRE3_BASE_PATH+"/CRF_118/2007-10-16/Sensation_16/segmented/17730001.nii",FIRE3_BASE_PATH+"/CRF_118/2007-10-16/Sensation_16/segmented/17730001_liv_x_clipped.nii")]
 
-fire3_dataset = [fire3_validation_set]
-fire3_bs = "/media/nas/03_Users/05_mohamedezz/thesis_latest_models/unet_models/plainunet/"
-fire3_models = [fire3_bs+"fire3Best18_allslices_plainunet_wd0.001_2dropout_172.5k_0.85_0.65.caffemodel"]
-fire3_models_step_two = [fire3_bs+"step2_models/fire3_step2_overfit_250k_0.53.caffemodel"]
-fire3_deployprototxt = [fire3_bs+"deploy_plainunet.prototxt"]
-fire3_deployprototxt_step_two = [fire3_bs+"../deploy_oldcrop_mezz.prototxt"]
+fire3_dataset = [fire3_validation_set[4:5]]
+fire3_bs = "/media/nas/03_Users/05_mohamedezz/thesis_latest_models/unet_models/"
+fire3_models = [fire3_bs+"step1_models/fire3_overfit_allslices_200k_0.89.caffemodel"]
+fire3_models_step_two = [fire3_bs+"step2_models/fire3_step2_wd0.0005_2dropout_191.5k_0.6.caffemodel"]
+fire3_deployprototxt = [fire3_bs+"step1_models/deploy_step1.prototxt"]
+fire3_deployprototxt_step_two = [fire3_bs+"step2_models/deploy_step2.prototxt"]
+
+fire3 = [fire3_dataset, fire3_models, fire3_deployprototxt, fire3_models_step_two, fire3_deployprototxt_step_two]
 ###########################
 ##### 3DIRCA DATASET ######
 ###########################
@@ -63,7 +70,7 @@ fire3_deployprototxt_step_two = [fire3_bs+"../deploy_oldcrop_mezz.prototxt"]
 #Use this line on IBBM computers
 #IRCA_BASE_PATH = '/media/nas/01_Datasets/CT/Abdomen/3Dircadb1/niftis_segmented_lesions/'
 #Use the Following line for slu02
-IRCA_BASE_PATH = '/data/niftis_segmented/'
+IRCA_BASE_PATH = '/media/nas/01_Datasets/CT/Abdomen/3Dircadb1/niftis_segmented_lesions/'
 
 #the array after the label element is the voxel spacing
 irca_all= [\
@@ -98,24 +105,24 @@ irca_train_fold2 = irca_all[:5] + irca_all[10:]
 irca_test_fold3 = irca_all[10:15]
 irca_train_fold3 = irca_all[:10]
 
-irca_dataset = [irca_test_fold1, irca_test_fold2, irca_test_fold3]
-irca_bs='/media/nas/03_Users/05_mohamedezz/miccai-models/'
-irca_models = [irca_bs+'ID34_fold1_100k_0.9.caffemodel',irca_bs+'ID34_fold2_12k_0.88.caffemodel',irca_bs+'ID34_fold3_15k_0.83.caffemodel']
-irca_models_step_two = [irca_bs+'fold1-ID29-zl60-i69k-0.53.caffemodel',irca_bs+'fold2-ID29-zl60-i160k-0.5.caffemodel',irca_bs+'fold3-ID29-zl60-i88k-0.48.caffemodel']
-irca_deployprototxt = 			[irca_bs+'deploy.prototxt']*3
-irca_deployprototxt_step_two = 	[irca_bs+'deploy.prototxt']*3
+#irca_dataset = [irca_test_fold1, irca_test_fold2, irca_test_fold3]
+irca_dataset = [irca_all]
+irca_bs='/media/nas/03_Users/05_mohamedezz/thesis_latest_models/unet_models/'
+irca_models = [irca_bs+'step1_models/fire3_overfit_allslices_200k_0.89.caffemodel']
+irca_models_step_two = [irca_bs+"step2_models/fire3_step2_wd0.0005_2dropout_191.5k_0.6.caffemodel"]
+irca_deployprototxt = 			[irca_bs+'step1_models/deploy_step1.prototxt']
+irca_deployprototxt_step_two = 	[irca_bs+'step1_models/deploy_step1.prototxt']
 
+irca = [irca_dataset, irca_models, irca_deployprototxt, irca_models_step_two, irca_deployprototxt_step_two]
 ###########################
 ##### SELECT DATASET ######
 ###########################
 
+dataset, models, deployprototxt, models_step_two, deployprototxt_step_two = fire3
 
-#Datset to test
-dataset = fire3_dataset
-models = fire3_models
-models_step_two = fire3_models_step_two
-deployprototxt = fire3_deployprototxt
-deployprototxt_step_two = fire3_deployprototxt_step_two
+
+
+
 
 
 

@@ -5,10 +5,11 @@ import numpy as np
 
 
 
-class myReporter(ReporterTask):
+class miccaiReporter(ReporterTask):
 
 	def __init__(self):
 		self.results = []
+		self.outpath = os.path.join(miccai_config.outdir, miccai_config.outfile)
 
 	def run(self, input_tuple, foldidx_scores):
 		foldidx, liver_scores, lesion_scores = foldidx_scores
@@ -23,7 +24,7 @@ class myReporter(ReporterTask):
 		outstr += '\n'
 
 		#create header for csv file if necessary
-		if not os.path.isfile(miccai_config.outfile):
+		if not os.path.isfile(self.outpath):
 			headerstr = 'VolumeID,Fold,'
 			for k,v in liver_scores.iteritems():
 				headerstr += 'Liver_' + k + ','
@@ -34,7 +35,7 @@ class myReporter(ReporterTask):
 			outstr = headerstr + outstr
 
 		#write to file
-		f = open(miccai_config.outfile, 'a+')
+		f = open(self.outpath, 'a+')
 		f.write(outstr)
 		f.close()
 

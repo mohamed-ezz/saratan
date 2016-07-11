@@ -43,43 +43,83 @@ Notes:
 #from validation.pipeline.example import *
 
 
-from miccai_pipeline.inputiterator import myInputIterator
-from miccai_pipeline.preprocessor import myPreprocessor
-from miccai_pipeline.predictor import myPredictor
-from miccai_pipeline.postprocessor import myPostprocessor
-from miccai_pipeline.reporter import myReporter
-from miccai_pipeline.evaluator import myEvaluator
+# from miccai_pipeline.inputiterator import myInputIterator
+# from miccai_pipeline.preprocessor import myPreprocessor
+# from miccai_pipeline.predictor import myPredictor
+# from miccai_pipeline.postprocessor import myPostprocessor
+# from miccai_pipeline.reporter import myReporter
+# from miccai_pipeline.evaluator import myEvaluator
 
-class Pipeline:
+from fire3_pipeline.inputiterator import fire3InputIterator
+from fire3_pipeline.preprocessor import fire3Preprocessor
+from fire3_pipeline.predictor import fire3Predictor
+
+from miccai_pipeline.inputiterator import miccaiInputIterator
+from miccai_pipeline.preprocessor import miccaiPreprocessor
+from miccai_pipeline.predictor import miccaiPredictor
+from miccai_pipeline.postprocessor import miccaiPostprocessor
+from miccai_pipeline.evaluator import miccaiEvaluator
+from miccai_pipeline.reporter import miccaiReporter
+
+import validation.pipeline.validation_task as validation_task 
+class MICCAI_Pipeline:
 	""" Controls the flow of the pipeline """
 	
-	InputIterator = myInputIterator # a class that extends validation_task.InputIteratorTask
+	InputIterator = miccaiInputIterator # a class that extends validation_task.InputIteratorTask
 	InputIterator_save_to_disk = False
 	InputIterator_save_directory= 'input_iterator_output_directory'
 	
-	Preprocessor  = myPreprocessor
+	Preprocessor  = miccaiPreprocessor
 	Preprocessor_save_to_disk = False
 	Preprocessor_save_directory= 'preprocessor_output_directory'
 		
-	Predictor     = myPredictor
-	Predictor_save_to_disk = False
+	Predictor     = miccaiPredictor
+	Predictor_save_to_disk = True
 	Predictor_save_directory= 'predictor_output_directory'
 		
-	Postprocessor = myPostprocessor
+	Postprocessor = miccaiPostprocessor#validation_task.IdentityPostprocessor
 	Postprocessor_save_to_disk = False
 	Postprocessor_save_directory= 'postprocessor_output_directory'	
 
-	Evaluator     = myEvaluator
+	Evaluator     = miccaiEvaluator#validation_task.IdentityEvaluator
 	Evaluator_save_to_disk = False
 	Evaluator_save_directory= 'evluator_output_directory'
 	
-	Reporter      = myReporter
+	Reporter      = miccaiReporter#validation_task.IdentityReporter
+	Reporter_save_directory = 'report_output_directory'
+
+class FIRE3_Pipeline:
+	""" Controls the flow of the pipeline """
+	
+	InputIterator = fire3InputIterator # a class that extends validation_task.InputIteratorTask
+	InputIterator_save_to_disk = False
+	InputIterator_save_directory= 'input_iterator_output_directory'
+	
+	Preprocessor  = fire3Preprocessor
+	Preprocessor_save_to_disk = False
+	Preprocessor_save_directory= 'preprocessor_output_directory'
+		
+	Predictor     = fire3Predictor
+	Predictor_save_to_disk = True
+	Predictor_save_directory= 'predictor_output_directory'
+		
+	Postprocessor = validation_task.IdentityPostprocessor
+	Postprocessor_save_to_disk = False
+	Postprocessor_save_directory= 'postprocessor_output_directory'	
+
+	Evaluator     = validation_task.IdentityEvaluator
+	Evaluator_save_to_disk = False
+	Evaluator_save_directory= 'evluator_output_directory'
+	
+	Reporter      = validation_task.IdentityReporter
 	Reporter_save_directory = 'report_output_directory'
 
 
+###################################
+####### SELECT PIPELINE ###########
+###################################
 
-
-
+Pipeline = MICCAI_Pipeline
 
 
 

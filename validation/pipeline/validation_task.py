@@ -32,3 +32,26 @@ class EvaluatorTask(ValidationTask):
 
 class ReporterTask(ValidationTask):
 	pass
+
+
+
+# Identity tasks (they do nothing, handy to skip one of the tasks)
+class IdentityPreprocessor(PreprocessorTask):
+	def run(self, *args):
+		return args
+class IdentityPredictor(PredictorTask):
+	def run(self, *args):
+		return args
+class IdentityPostprocessor(PostprocessorTask):
+	def run(self, *args):
+		return args
+class IdentityReporter(ReporterTask):
+	def run(self, *args):
+		return args
+class IdentityEvaluator(EvaluatorTask):
+	def run(self, *args):
+		return args
+	
+	
+	
+	

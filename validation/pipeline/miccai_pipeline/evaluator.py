@@ -27,7 +27,7 @@ def get_scores(pred,label,vxlspacing):
 
 
 
-class myEvaluator(EvaluatorTask):
+class miccaiEvaluator(EvaluatorTask):
 	def run(self, volumes):
 
 		fold = volumes[0]
@@ -39,8 +39,10 @@ class myEvaluator(EvaluatorTask):
 		pred = pred.astype(int)
 		label = label.astype(int)
 
-
-		return [fold,get_scores(pred>=1,label>=1,vxlspacing),get_scores(pred==2,label==2,vxlspacing)]
+		liver_scores = get_scores(pred>=1,label>=1,vxlspacing)
+		lesion_scores= get_scores(pred==2,label==2,vxlspacing)
+		print "Liver dice",liver_scores['dice'], "Lesion dice", lesion_scores['dice']
+		return [fold,liver_scores, lesion_scores]
 
 	def save(self, directory):
 		print "Saving myEvaluator to ",directory
