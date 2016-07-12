@@ -1,3 +1,5 @@
+import os
+
 params = dict()
 params['DataManagerParams']=dict()
 params['ModelParams']=dict()
