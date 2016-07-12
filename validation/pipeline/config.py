@@ -61,56 +61,93 @@ from miccai_pipeline.postprocessor import miccaiPostprocessor
 from miccai_pipeline.evaluator import miccaiEvaluator
 from miccai_pipeline.reporter import miccaiReporter
 
-import validation.pipeline.validation_task as validation_task 
+
+
+
+from vnet_pipeline.inputiterator import vnetInputIterator
+from miccai_pipeline.preprocessor import miccaiPreprocessor
+from miccai_pipeline.predictor import miccaiPredictor
+from miccai_pipeline.postprocessor import miccaiPostprocessor
+from miccai_pipeline.evaluator import miccaiEvaluator
+from miccai_pipeline.reporter import miccaiReporter
+
+
+import validation.pipeline.validation_task as validation_task
 class MICCAI_Pipeline:
 	""" Controls the flow of the pipeline """
-	
+
 	InputIterator = miccaiInputIterator # a class that extends validation_task.InputIteratorTask
 	InputIterator_save_to_disk = False
 	InputIterator_save_directory= 'input_iterator_output_directory'
-	
+
 	Preprocessor  = miccaiPreprocessor
 	Preprocessor_save_to_disk = False
 	Preprocessor_save_directory= 'preprocessor_output_directory'
-		
+
 	Predictor     = miccaiPredictor
 	Predictor_save_to_disk = True
 	Predictor_save_directory= 'predictor_output_directory'
-		
+
 	Postprocessor = miccaiPostprocessor#validation_task.IdentityPostprocessor
 	Postprocessor_save_to_disk = False
-	Postprocessor_save_directory= 'postprocessor_output_directory'	
+	Postprocessor_save_directory= 'postprocessor_output_directory'
 
 	Evaluator     = miccaiEvaluator#validation_task.IdentityEvaluator
 	Evaluator_save_to_disk = False
 	Evaluator_save_directory= 'evluator_output_directory'
-	
+
 	Reporter      = miccaiReporter#validation_task.IdentityReporter
 	Reporter_save_directory = 'report_output_directory'
 
 class FIRE3_Pipeline:
 	""" Controls the flow of the pipeline """
-	
+
 	InputIterator = fire3InputIterator # a class that extends validation_task.InputIteratorTask
 	InputIterator_save_to_disk = False
 	InputIterator_save_directory= 'input_iterator_output_directory'
-	
+
 	Preprocessor  = fire3Preprocessor
 	Preprocessor_save_to_disk = False
 	Preprocessor_save_directory= 'preprocessor_output_directory'
-		
+
 	Predictor     = fire3Predictor
 	Predictor_save_to_disk = True
 	Predictor_save_directory= 'predictor_output_directory'
-		
+
 	Postprocessor = validation_task.IdentityPostprocessor
 	Postprocessor_save_to_disk = False
-	Postprocessor_save_directory= 'postprocessor_output_directory'	
+	Postprocessor_save_directory= 'postprocessor_output_directory'
 
 	Evaluator     = validation_task.IdentityEvaluator
 	Evaluator_save_to_disk = False
 	Evaluator_save_directory= 'evluator_output_directory'
-	
+
+	Reporter      = validation_task.IdentityReporter
+	Reporter_save_directory = 'report_output_directory'
+
+class VNET_Pipeline:
+	""" Controls the flow of the pipeline """
+
+	InputIterator = vnetInputIterator # a class that extends validation_task.InputIteratorTask
+	InputIterator_save_to_disk = False
+	InputIterator_save_directory= 'input_iterator_output_directory'
+
+	Preprocessor  = vnetPreprocessor
+	Preprocessor_save_to_disk = False
+	Preprocessor_save_directory= 'preprocessor_output_directory'
+
+	Predictor     = vnetPredictor
+	Predictor_save_to_disk = True
+	Predictor_save_directory= 'predictor_output_directory'
+
+	Postprocessor = validation_task.IdentityPostprocessor
+	Postprocessor_save_to_disk = False
+	Postprocessor_save_directory= 'postprocessor_output_directory'
+
+	Evaluator     = validation_task.IdentityEvaluator
+	Evaluator_save_to_disk = False
+	Evaluator_save_directory= 'evluator_output_directory'
+
 	Reporter      = validation_task.IdentityReporter
 	Reporter_save_directory = 'report_output_directory'
 
@@ -119,7 +156,7 @@ class FIRE3_Pipeline:
 ####### SELECT PIPELINE ###########
 ###################################
 
-Pipeline = MICCAI_Pipeline
+Pipeline = VNET_Pipeline
 
 
 
