@@ -65,11 +65,11 @@ from miccai_pipeline.reporter import miccaiReporter
 
 
 from vnet_pipeline.inputiterator import vnetInputIterator
-from miccai_pipeline.preprocessor import miccaiPreprocessor
-from miccai_pipeline.predictor import miccaiPredictor
-from miccai_pipeline.postprocessor import miccaiPostprocessor
-from miccai_pipeline.evaluator import miccaiEvaluator
-from miccai_pipeline.reporter import miccaiReporter
+from vnet_pipeline.preprocessor import vnetPreprocessor
+from vnet_pipeline.predictor import vnetPredictor
+from vnet_pipeline.postprocessor import vnetPostprocessor
+from vnet_pipeline.evaluator import vnetEvaluator
+from vnet_pipeline.reporter import vnetReporter
 
 
 import validation.pipeline.validation_task as validation_task
