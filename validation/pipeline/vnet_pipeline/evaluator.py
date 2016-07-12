@@ -28,21 +28,28 @@ def get_scores(pred,label,vxlspacing):
 
 
 class vnetEvaluator(EvaluatorTask):
-	def run(self, volumes):
+	def run(self, input_tuple):
 
-		fold = volumes[0]
-		vxlspacing = volumes[1]
-		pred = volumes[2]
-		label = volumes[3]
+
+		number = input_tuple[0][0]
+		vxlspacing = [1,1,1]
+		pred = input_tuple[0][1]
+		label = input_tuple[0][2]
+
 
 		#for some reason correct label and prediction dtypes got lost
 		pred = pred.astype(int)
 		label = label.astype(int)
 
+		print 'liverpixels', np.sum(pred==1)
+		print 'trueliverprixels', np.sum(label==1)
+
 		liver_scores = get_scores(pred>=1,label>=1,vxlspacing)
-		lesion_scores= get_scores(pred==2,label==2,vxlspacing)
-		print "Liver dice",liver_scores['dice'], "Lesion dice", lesion_scores['dice']
-		return [fold,liver_scores, lesion_scores]
+		#lesion_scores= get_scores(pred==2,label==2,vxlspacing)
+		#print "Liver dice",liver_scores['dice'], "Lesion dice", lesion_scores['dice']
+		#return [number,liver_scores, lesion_scores]
+		print "Liver dice",liver_scores['dice']
+		return [number, liver_scores]
 
 	def save(self, directory):
 		print "Saving myEvaluator to ",directory

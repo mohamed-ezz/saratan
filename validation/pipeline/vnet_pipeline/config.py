@@ -28,6 +28,7 @@ params['ModelParams']['baseLR'] = 0.0001 #the learning rate, initial one
 params['ModelParams']['nProc'] = 3 #the number of threads to do data augmentation
 
 
+
 #params of the DataManager
 params['DataManagerParams']['dstRes'] = np.asarray([4,4,3],dtype=float)
 params['DataManagerParams']['VolSize'] = np.asarray([128,128,64],dtype=int)

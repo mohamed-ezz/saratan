@@ -29,11 +29,13 @@ class vnetInputIterator(InputIteratorTask):
 		#print labels
 
 		#inputs = [(1,2,3), (4,5,6), (6,7,8), (1,2,3)]
+
+		yield (01, volumes['image01.nii'], labels['label01.nii'])
 		for key in volumes:
 			image_num= re.findall("\d+",key)[0]
 			print key
 			print image_num
-			yield (image_num, volumes[key], labels['label' + str(image_num) + '.nii'])
+			#yield (image_num, volumes[key], labels['label' + str(image_num) + '.nii'])
 
 	def __len__(self):
 		return 1
