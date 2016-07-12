@@ -1,7 +1,10 @@
 import os
+import numpy as np
 
 cwd=os.getcwd()
 
+
+basePath='/media/nas/03_Users/01_patrickchrist/vnet'
 
 params = dict()
 params['DataManagerParams']=dict()
