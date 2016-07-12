@@ -1,5 +1,8 @@
 import os
 
+cwd=os.getcwd()
+
+
 params = dict()
 params['DataManagerParams']=dict()
 params['ModelParams']=dict()
