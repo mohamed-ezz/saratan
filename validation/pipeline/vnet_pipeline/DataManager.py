@@ -20,6 +20,7 @@ class DataManager(object):
         self.srcFolder=srcFolder
         self.resultsDir=resultsDir
 
+
     def createImageFileList(self):
         self.fileList = [f for f in sorted(listdir(self.srcFolder)) if isfile(join(self.srcFolder, f)) and 'image' in f]
         print 'FILE LIST: ' + str(self.fileList)
@@ -40,9 +41,14 @@ class DataManager(object):
         stats = sitk.StatisticsImageFilter()
         m = 0.
         for f in self.fileList:
-            self.sitkImages[f]=rescalFilt.Execute(sitk.Cast(sitk.ReadImage(join(self.srcFolder, f)),sitk.sitkFloat32))
+            # Todo Clipping parameters global
+            image=sitk.Cast(sitk.ReadImage(join(self.srcFolder, f)),sitk.sitkFloat32)
+            image=sitk.GetImageFromArray(np.clip(sitk.GetArrayFromImage(image),-100,200))
+            self.sitkImages[f]=rescalFilt.Execute(image)
+
             stats.Execute(self.sitkImages[f])
             m += stats.GetMean()
+
 
         self.meanIntensityTrain=m/len(self.sitkImages)
 
@@ -52,7 +58,8 @@ class DataManager(object):
 
         for f in self.gtList:
             # Select here the label
-            self.sitkGT[f]=sitk.Cast(sitk.ReadImage(join(self.srcFolder, f))>0.5,sitk.sitkFloat32)
+            # Todo Refactor this
+            self.sitkGT[f]=sitk.Cast(sitk.ReadImage(join(self.srcFolder, f))>1.5,sitk.sitkFloat32)
 
 
 
@@ -205,4 +212,3 @@ class DataManager(object):
         #print join(self.resultsDir, filename + '_result' + ext)
         writer.SetFileName(join(self.resultsDir, filename + '_result' + ext))
         writer.Execute(toWrite)
-

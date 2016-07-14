@@ -21,8 +21,7 @@ class vnetInputIterator(InputIteratorTask):
 		volumes = dataManagerTest.getNumpyImages()
 		labels = dataManagerTest.getNumpyGT()
 
-		print 'load labels np unique'
-		print np.unique(labels['label01.nii'])
+
 
 		#print dataManagerTest.sitkImages
 

@@ -20,7 +20,6 @@ class vnetPredictor(PredictorTask):
 		label = input_tuple[2]
 
 		print 'image shape',image.shape
-		print 'image unique', np.unique(image)
 
 		print 'label unique', np.unique(label)
 
