@@ -7,6 +7,8 @@ import os
 import numpy as np
 
 import caffe
+caffe.set_mode_gpu()
+
 
 class vnetPredictor(PredictorTask):
 
@@ -20,8 +22,10 @@ class vnetPredictor(PredictorTask):
 		print 'image shape',image.shape
 		print 'image unique', np.unique(image)
 
+		print 'label unique', np.unique(label)
 
-		#TODO baue hier die trainprototxt ein und kopiere den code aus patricks notebook
+		plt.imshow(label[:,:,30])
+
 
 		net = caffe.Net(vnet_config.params['ModelParams']['prototxtTest'],
                         os.path.join(vnet_config.params['ModelParams']['dirSnapshots'],"_iter_" + str(vnet_config.params['ModelParams']['snapshot']) + ".caffemodel"),
@@ -32,19 +36,17 @@ class vnetPredictor(PredictorTask):
 		out = net.forward()
 		#print out
 		l = out["labelmap"]
-		print l.shape
-		print l[0].shape
+
 		#print np.unique(l)
 		#labelmap = np.squeeze(l[0,1,:,:,:])
 		#prediction = np.squeeze(labelmap)
 		prediction= np.argmax(l[0],axis=0)
 
-		plt.imshow(l[0,0, :,:,30])
+		#plt.imshow(l[0,0, :,:,30])
 		plt.savefig('img.jpg')
 
 
-		print prediction.shape
-		print np.unique(prediction)
+		print 'prediction np unique', np.unique(prediction)
 
 
 		return [number, prediction, label]

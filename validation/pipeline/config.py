@@ -67,7 +67,6 @@ from miccai_pipeline.reporter import miccaiReporter
 from vnet_pipeline.inputiterator import vnetInputIterator
 from vnet_pipeline.preprocessor import vnetPreprocessor
 from vnet_pipeline.predictor import vnetPredictor
-from vnet_pipeline.postprocessor import vnetPostprocessor
 from vnet_pipeline.evaluator import vnetEvaluator
 from vnet_pipeline.reporter import vnetReporter
 
@@ -144,7 +143,7 @@ class VNET_Pipeline:
 	Postprocessor_save_to_disk = False
 	Postprocessor_save_directory= 'postprocessor_output_directory'
 
-	Evaluator     = validation_task.IdentityEvaluator
+	Evaluator     = vnetEvaluator#validation_task.IdentityEvaluator
 	Evaluator_save_to_disk = False
 	Evaluator_save_directory= 'evluator_output_directory'
 

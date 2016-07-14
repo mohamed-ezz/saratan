@@ -4,6 +4,7 @@ import config as vnet_config
 import re
 
 import DataManager as DM
+import numpy as np
 
 
 
@@ -20,6 +21,9 @@ class vnetInputIterator(InputIteratorTask):
 		volumes = dataManagerTest.getNumpyImages()
 		labels = dataManagerTest.getNumpyGT()
 
+		print 'load labels np unique'
+		print np.unique(labels['label01.nii'])
+
 		#print dataManagerTest.sitkImages
 
 		#print dataManagerTest.sitkGT
@@ -30,12 +34,12 @@ class vnetInputIterator(InputIteratorTask):
 
 		#inputs = [(1,2,3), (4,5,6), (6,7,8), (1,2,3)]
 
-		yield (01, volumes['image01.nii'], labels['label01.nii'])
+		#yield (01, volumes['image01.nii'], labels['label01.nii'])
 		for key in volumes:
 			image_num= re.findall("\d+",key)[0]
 			print key
 			print image_num
-			#yield (image_num, volumes[key], labels['label' + str(image_num) + '.nii'])
+			yield (image_num, volumes[key], labels['label' + str(image_num) + '.nii'])
 
 	def __len__(self):
 		return 1

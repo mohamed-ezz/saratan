@@ -41,8 +41,8 @@ class vnetEvaluator(EvaluatorTask):
 		pred = pred.astype(int)
 		label = label.astype(int)
 
-		print 'liverpixels', np.sum(pred==1)
-		print 'trueliverprixels', np.sum(label==1)
+		print '#predicted pixels', np.sum(pred==1)
+		print '#label pixels', np.sum(label==1)
 
 		liver_scores = get_scores(pred>=1,label>=1,vxlspacing)
 		#lesion_scores= get_scores(pred==2,label==2,vxlspacing)

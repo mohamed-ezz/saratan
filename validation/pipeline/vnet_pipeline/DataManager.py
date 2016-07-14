@@ -52,7 +52,7 @@ class DataManager(object):
 
         for f in self.gtList:
             # Select here the label
-            self.sitkGT[f]=sitk.Cast(sitk.ReadImage(join(self.srcFolder, f))>1.5,sitk.sitkFloat32)
+            self.sitkGT[f]=sitk.Cast(sitk.ReadImage(join(self.srcFolder, f))>0.5,sitk.sitkFloat32)
 
 
 
