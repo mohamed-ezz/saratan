@@ -64,13 +64,18 @@ RUN cd /opt && git clone https://github.com/faustomilletari/3D-Caffe.git caffe &
 #Clone Faustos VNET Project
 RUN cd /opt/ && git clone https://github.com/patrickchrist/VNet.git vnet
 
+#Add deployment ssh key
+ADD repo_key /
+RUN chmod 600 /repo_key
+RUN echo "IdentityFile /repo_key" >> /etc/ssh/ssh_config
+RUN echo "StrictHostKeyChecking no" >> /etc/ssh/ssh_config
 
 # Clone and Install 3D DenseCRF
-RUN cd /opt && git clone -b master https://IBBM_Ops:kfh7jibbmh3e8q95fqv5dx5q@bitbucket.org/patrickchrist/denseinferencewrapper.git denseinferencewrapper
+RUN cd /opt && git clone -b master git@bitbucket.org:ibbm/denseinferencewrapper.git denseinferencewrapper
 # Build and install 3D DesneCRF
 RUN cd /opt/denseinferencewrapper && make && pip install .
 # Clone Saratan project
-RUN cd /opt/ && git clone https://IBBM_Ops:kfh7jibbmh3e8q95fqv5dx5q@bitbucket.org/patrickchrist/saratan.git
+RUN cd /opt/ && git clone git@bitbucket.org:patrickchrist/saratan.git 
 ENV PYTHONPATH /opt/caffe/python:/opt/saratan/:/opt/saratan/data/layers:/opt/vnet
 
 

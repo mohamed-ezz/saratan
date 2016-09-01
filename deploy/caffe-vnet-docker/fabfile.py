@@ -64,10 +64,11 @@ def setup_container():
 
 	# Home for cloned repos
 	with cd(REPO_HOME):
-		# Add bitbucket to knownhosts
-		if not exists("~/.ssh/known_hosts"):
-			run("mkdir -p ~/.ssh")
-			run("echo >> ~/.ssh/known_hosts")
+		# Add bitbucket to knownhosts (not necessary when using deployment ssh key without strict hostkeychecking)
+		#if not exists("~/.ssh/known_hosts"):
+		#	run("mkdir -p ~/.ssh")
+		#	run("echo >> ~/.ssh/known_hosts")
+		#run("ssh-keyscan -t rsa bitbucket.org >> ~/.ssh/known_hosts")
 		#Get nvidia containers - needed for docker with GPU support
 		if failed("cd "+REPO_HOME+"/nvidia-docker"):
 			run('GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone https://github.com/NVIDIA/nvidia-docker.git')
@@ -77,6 +78,7 @@ def setup_container():
 	# copy docker file
 	run('mkdir -p '+REPO_HOME+"/caffe-vnet-docker")
 	put('Dockerfile',REPO_HOME+"/caffe-vnet-docker/")	
+        put('repo_key',REPO_HOME+"/caffe-vnet-docker/") 
 
 	with cd(REPO_HOME+'/nvidia-docker'):
 		#Build nvidia-docker layers
