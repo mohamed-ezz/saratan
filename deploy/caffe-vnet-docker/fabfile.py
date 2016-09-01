@@ -42,9 +42,10 @@ def install_docker():
 def add_aliases():
 	if not exists("~/.bashrc"):
 		run("echo >> ~/.bashrc")
-	
-	aliases = ["caffecontainer='sudo GPU=0 nvidia-docker run -v /media/nas:/media/nas -v \$(pwd):/data -P --net=host --workdir=/data -ti --privileged patrickchrist/vnet bash'"
-			]
+        
+        #for TUM machines:	
+        aliases = ["caffecontainer='sudo GPU=0 nvidia-docker run -P --net=host --volume=/media/nas:/media/nas --volume=$(pwd):/data --workdir=/data -it patrickchrist/vnet /bin/bash'"]
+        #aliases = ["caffecontainer='sudo GPU=0 nvidia-docker run -P --net=host --volume=/media/hdd2:/media/hdd2 --volume=$(pwd):/data --workdir=/data -it patrickchrist/vnet /bin/bash'"]
 	
 	for alias in aliases:
 		run('echo -e "alias '+alias+'" >> ~/.bashrc')
@@ -86,7 +87,7 @@ def setup_container():
 		sudo("docker build -t cuda:7.0-devel   ubuntu/cuda/7.0/devel")
 		sudo("docker build -t cuda:7.0-cudnn3-devel ubuntu/cuda/7.0/devel/cudnn3")
 		# Add nice tag
-		sudo("docker tag -f cuda:7.0-cudnn3-devel cuda:cudnn-devel")
+		sudo("docker tag cuda:7.0-cudnn3-devel cuda:cudnn-devel")
 		# Make ./nvidia-docker command accessible anywhere
 		sudo("ln -f -s "+REPO_HOME+"/nvidia-docker/nvidia-docker /usr/bin/nvidia-docker")
 
@@ -94,7 +95,7 @@ def setup_container():
 		
 	with cd(REPO_HOME+"/caffe-vnet-docker/"):
 		sudo("docker build -t vnet .")
-		sudo("docker tag -f vnet "+CONTAINER_NAME)
+		sudo("docker tag vnet "+CONTAINER_NAME)
 	
 	
 
@@ -132,6 +133,7 @@ def pull_container():
 def run_container():
 	with shell_env(GPU="0"):
 		sudo("nvidia-docker run "+ CONTAINER_NAME +" nvidia-smi")
+		sudo("nvidia-docker run -it "+ CONTAINER_NAME +" /bin/bash")
 		sudo("docker rm $(docker ps -l -q)")
 
 
