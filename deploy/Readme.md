@@ -24,6 +24,10 @@ e.g. : `ssh-add ~/.ssh/id_rsa`
 
 Note for first-time-usage: Make sure that '~/.ssh/known_hosts' exists on the HOST machine. Otherwise you might get a runtime error.
 
+### Caffe VNet Docker ###
+The Caffe VNet Dockerfile has been updated to use a deployment ssh key to read the private repositories.
+repo_key is automatically copied to the HOST machine by fabfile.py and added to the docker container by the Dockerfile.
+
 ##Add User to Docker Group
 You need to add your current user to docker group as follow :
 `sudo usermod -aG docker <user>`
