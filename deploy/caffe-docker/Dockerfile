@@ -63,11 +63,11 @@ ldconfig
 # Clone my own branch with the CLASS WEIGHTING feature + Weigh_prediction_class option
 RUN cd /opt && git clone -b jonlong https://github.com/mohamed-ezz/caffe.git caffe && cd /opt/caffe
 # Clone and Install 3D DenseCRF
-RUN cd /opt && git clone -b master https://IBBM_Ops:kfh7jibbmh3e8q95fqv5dx5q@bitbucket.org/patrickchrist/denseinferencewrapper.git denseinferencewrapper
+RUN cd /opt && git clone -b master https://github.com/mbickel/DenseInferenceWrapper.git denseinferencewrapper
 # Build and install 3D DesneCRF
 RUN cd /opt/denseinferencewrapper && make && pip install .
 # Clone Saratan project
-RUN cd /opt/ && git clone https://IBBM_Ops:kfh7jibbmh3e8q95fqv5dx5q@bitbucket.org/patrickchrist/saratan.git
+RUN cd /opt/ && git clone https://github.com/mohamed-ezz/saratan.git
 ENV PYTHONPATH /opt/caffe/python:/opt/saratan/:/opt/saratan/data/layers
 
 
@@ -99,7 +99,7 @@ make pycaffe -j$(nproc)
 # Install caffe
 ENV PATH $PATH:/opt/caffe/.build_release/tools
 
-EXPOSE 8888 8889 8890 8891 8892 8893 8894 8895 8896 8897 8898 8899 8900
+EXPOSE 8888-8900
 
 # For some reason, at this point git doesn't work giving the following error:
 # git-remote-https: symbol lookup error: /usr/lib/x86_64-linux-gnu/libasn1.so.8: undefined symbol: _et_list
