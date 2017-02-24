@@ -1,6 +1,6 @@
 ## Saratan (Arabic : سرطان)##
 
-This repo contains the code used for the following paper. The offical repo referred to in the paper is found in this repo : https://github.com/IBBM/Cascaded-FCN/
+This repo contains the code used for the following paper.
 ```
 @Inbook{Christ2016,
 title="Automatic Liver and Lesion Segmentation in CT Using Cascaded Fully Convolutional Neural Networks and 3D Conditional Random Fields",
@@ -16,6 +16,8 @@ doi="10.1007/978-3-319-46723-8_48",
 url="http://dx.doi.org/10.1007/978-3-319-46723-8_48"
 }
 ```
+The offical repo referred to in the paper is found in this repo : https://github.com/IBBM/Cascaded-FCN/
+
 ### Training the network on your own data using UNet pretrained models ###
 To retrain the network on your data, find the training notebook and the training prototxt in `notebooks/realtime_train.ipynb`. The notebook trains the network using the pretrained UNet model as initialization. To download the pretrained UNet model:
 
