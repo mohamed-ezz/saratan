@@ -1,4 +1,4 @@
-## Saratan (Arabic : سرطان)##
+# Saratan (Arabic for Cancer / سرطان)
 
 This repo contains the code used for the following paper.
 ```
